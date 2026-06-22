@@ -1,0 +1,23 @@
+name: Deploy to the live
+on:
+  push:
+    branches:
+      - pre-release
+jobs:  
+    deploy: 
+        runs-on: ubuntu-latest
+
+        steps:
+        - name: Pull and run Artisan commands on the server
+          uses: appleboy/ssh-action@master
+          with:
+                host: ${{ secrets.SSH_HOST }}
+                username: ${{ secrets.SSH_USERNAME }}
+                key: ${{ secrets.SSH_PRIVATE_KEY }}
+                script: |
+                    cd /home/ploi/eventagile.com
+                    git pull origin pre-release
+                    composer install --optimize-autoloader
+                    npm run build
+                    php artisan optimize:clear   
+                    php artisan view:clear   
