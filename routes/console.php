@@ -1,6 +1,5 @@
 <?php
 
-use App\Console\Commands\BackupTenantDatabases;
 use App\Console\Commands\DemoData;
 use Illuminate\Foundation\Console\ClosureCommand;
 use Illuminate\Foundation\Inspiring;
@@ -12,6 +11,5 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Schedule::command(BackupTenantDatabases::class)->dailyAt('02:00');
 
 Schedule::command(DemoData::class)->dailyAt('04:00');
