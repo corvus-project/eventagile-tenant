@@ -1,3 +1,13 @@
+FROM node:22-alpine AS assets
+
+WORKDIR /app
+
+# Build Vite assets so Laravel can read public/build/manifest.json
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+
 FROM php:8.4.16-fpm
 
 # Install system dependencies and PHP extension build deps
@@ -43,9 +53,21 @@ WORKDIR /var/www/html
 # Copy application files
 COPY . /var/www/html
 
+# Copy built Vite assets into the PHP image for Laravel's @vite manifest lookup
+COPY --from=assets /app/public/build /var/www/html/public/build
+
 # Copy configs
 COPY ./docker/supervisord.conf /etc/supervisord.conf
 # COPY ./docker/nginx.conf /etc/nginx/sites-available/default
+
+# Create Laravel writable directories before Composer runs artisan scripts
+RUN mkdir -p \
+    /var/www/html/storage/app \
+    /var/www/html/storage/framework/cache/data \
+    /var/www/html/storage/framework/sessions \
+    /var/www/html/storage/framework/views \
+    /var/www/html/storage/logs \
+    /var/www/html/bootstrap/cache
 
 # Install production Composer dependencies during the image build
 RUN composer install \
@@ -55,8 +77,7 @@ RUN composer install \
     --optimize-autoloader
 
 # Set permissions
-RUN mkdir -p /var/www/html/storage /var/www/html/bootstrap/cache \
-    && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 EXPOSE 9000

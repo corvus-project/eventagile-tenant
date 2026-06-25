@@ -4,6 +4,7 @@ use App\Exceptions\RateLimiterException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use jeremykenedy\LaravelRoles\App\Exceptions\RoleDeniedException;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -20,12 +21,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \jeremykenedy\LaravelRoles\App\Http\Middleware\VerifyRole::class,
         ]);
         $middleware->group('universal', []);
-        $middleware->trustProxies(at: [
-            '127.0.0.1',
-            'localhost',
-            '192.168.1.1',
-            '10.0.0.0/8',
-        ]);
+        $middleware->trustProxies(
+            at: '*',
+            headers: Request::HEADER_X_FORWARDED_TRAEFIK
+        );
     })
 
     ->withExceptions(function (Exceptions $exceptions) {
