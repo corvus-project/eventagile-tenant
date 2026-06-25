@@ -55,9 +55,6 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             # Navigate to the new app directory on the server
-            cd /app
-            cat > .env <<'EOF'
-            ${{ secrets.PROD_ENV_FILE }}
-            EOF            
+            cd /app         
             docker compose pull saas-nginx saas-php saas-worker
             docker compose up -d saas-nginx saas-php saas-worker
