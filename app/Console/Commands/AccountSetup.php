@@ -6,6 +6,7 @@ use App\Events\OnboardTenant;
 use App\Models\AccountSetup as ModelsAccountSetup;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Services\Helper;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -78,7 +79,7 @@ class AccountSetup extends Command
             Log::debug('Tenant Creation: ', [
                 'user' => $user->id,
                 'tenant' => $tenant->id,
-                'domain' =>  $account->domain
+                'domain' =>  $account->domain . '.' . Helper::appdomain()
             ]);
             return $tenant;
         }

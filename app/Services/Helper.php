@@ -12,6 +12,13 @@ use Stancl\Tenancy\Database\Models\Domain;
 
 class Helper
 {
+    public static function appdomain()
+    {
+        $url = config('app.url');
+        $disallowed = array('http://', 'https://');
+        return str_replace($disallowed, '', $url);
+    }
+
     public static function tenantUrl()
     {
         $disallowed = array('http://', 'https://');
