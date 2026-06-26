@@ -22,20 +22,19 @@ class OnboardingUser
      */
     public function handle(OnboardTenant $event): void
     {
-        Log::info('User email verified', ['user_id' => $event->user->id, $event]);
-        $tenant = Tenant::where('email', $event->user->email)->first();
+        $tenant = $event->tenant;
         if ($tenant) {
             $tenant->is_active = true;
             $tenant->save();
             Log::info('Tenant activated', ['tenant_id' => $tenant->id]);
 
             (new OnBoardingService())->process($tenant, [
-                'admin_name' => $event->user->name,
-                'admin_email' => $event->user->email,
+                'admin_name' => $tenant->name,
+                'admin_email' => $tenant->email,
                 'admin_password' => 'password', // In real application, generate a secure password and send to user
             ]);
         } else {
-            Log::warning('No tenant found for verified user', ['user_id' => $event->user->id]);
+            Log::warning('No tenant found for verified user');
         }
     }
 }
