@@ -1,5 +1,6 @@
 <?php
 
+use App\Console\Commands\AccountSetup;
 use App\Console\Commands\DemoData;
 use Illuminate\Foundation\Console\ClosureCommand;
 use Illuminate\Foundation\Inspiring;
@@ -13,3 +14,5 @@ Artisan::command('inspire', function () {
 
 
 Schedule::command(DemoData::class)->dailyAt('04:00');
+
+Schedule::command(AccountSetup::class)->everyFiveMinutes();

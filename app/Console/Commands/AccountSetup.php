@@ -37,6 +37,8 @@ class AccountSetup extends Command
                 event(new OnboardTenant($tenant));
                 $account->action = 'FINISHED';
                 $account->save();
+
+                Log::debug('Tenant setup finished: ' . $tenant->id);
             }
         }
     }
