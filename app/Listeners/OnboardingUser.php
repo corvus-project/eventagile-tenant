@@ -2,9 +2,9 @@
 
 namespace App\Listeners;
 
+use App\Events\OnboardTenant;
 use App\Models\Tenant;
 use App\Services\OnBoardingService;
-use Illuminate\Auth\Events\Verified as EventsVerified;
 use Illuminate\Support\Facades\Log;
 
 class OnboardingUser
@@ -20,7 +20,7 @@ class OnboardingUser
     /**
      * Handle the event.
      */
-    public function handle(EventsVerified $event): void
+    public function handle(OnboardTenant $event): void
     {
         Log::info('User email verified', ['user_id' => $event->user->id, $event]);
         $tenant = Tenant::where('email', $event->user->email)->first();
