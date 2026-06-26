@@ -53,14 +53,14 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('view-any-event', [EventPolicy::class, 'viewAny']);
 
 
-        if (app()->environment('local', 'staging') && !$this->isMigrationOrSeederCommand()) {
+        /*         if (app()->environment('local', 'staging') && !$this->isMigrationOrSeederCommand()) {
             DB::listen(function ($query) {
                 File::append(
                     storage_path('/logs/query.log'),
                     $query->sql . ' [' . implode(', ', $query->bindings) . ']' . PHP_EOL
                 );
             });
-        }
+        } */
         RateLimiter::for('login', function (string $email, string $ip) {
             return Limit::perMinute(5)->by($email . $ip);
         });

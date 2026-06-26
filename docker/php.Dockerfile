@@ -13,6 +13,7 @@ FROM php:8.4.16-fpm
 # Install system dependencies and PHP extension build deps
 RUN apt-get update && apt-get install -y \
     git \
+    vim \
     curl \
     unzip \
     zip \
