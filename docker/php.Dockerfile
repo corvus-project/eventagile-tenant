@@ -2,54 +2,9 @@ FROM node:22-alpine AS assets
 
 WORKDIR /app
 
-# maryUI's Tailwind sources live in Composer's vendor directory and its
-# installer is an artisan command, so the asset image needs PHP + Composer.
-RUN apk add --no-cache \
-    composer \
-    php84 \
-    php84-bcmath \
-    php84-ctype \
-    php84-curl \
-    php84-dom \
-    php84-fileinfo \
-    php84-gd \
-    php84-iconv \
-    php84-intl \
-    php84-mbstring \
-    php84-openssl \
-    php84-pcntl \
-    php84-pdo \
-    php84-pdo_mysql \
-    php84-phar \
-    php84-session \
-    php84-simplexml \
-    php84-sodium \
-    php84-tokenizer \
-    php84-xml \
-    php84-xmlwriter \
-    php84-zip \
-    && ln -sf /usr/bin/php84 /usr/bin/php
-
 # Build Vite assets so Laravel can read public/build/manifest.json
-COPY composer.json composer.lock package*.json ./
-RUN composer install \
-    --no-interaction \
-    --prefer-dist \
-    --optimize-autoloader \
-    --no-scripts
-RUN npm install
-COPY . .
-RUN mkdir -p \
-    storage/app \
-    storage/framework/cache/data \
-    storage/framework/sessions \
-    storage/framework/views \
-    storage/logs \
-    bootstrap/cache
-RUN composer dump-autoload --optimize \
-    && php artisan package:discover --ansi
-RUN php artisan mary:install --npm --no-css
-RUN npm run build
+COPY package*.json ./
+
 
 FROM php:8.4.16-fpm
 
@@ -121,6 +76,14 @@ RUN composer install \
     --no-interaction \
     --prefer-dist \
     --optimize-autoloader
+
+RUN npm install
+COPY . .
+RUN npm run build
+
+RUN composer dump-autoload --optimize \
+    && php artisan package:discover --ansi
+RUN php artisan mary:install --npm --no-css
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
