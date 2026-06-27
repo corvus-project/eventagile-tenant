@@ -44,6 +44,10 @@ RUN docker-php-ext-install -j$(nproc) \
     intl \
     sodium
 
+# Install phpredis for Laravel's default REDIS_CLIENT=phpredis configuration
+RUN pecl install redis \
+    && docker-php-ext-enable redis
+
 # Copy Composer binary
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
