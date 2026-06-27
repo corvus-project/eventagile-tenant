@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use Stancl\Tenancy\Features\UserImpersonation;
-
 use App\Http\Controllers\Auth\TenantEmailVerificationController;
 use App\Http\Controllers\Auth\TenantLogoutController;
 use Illuminate\Support\Facades\Route;
@@ -37,10 +36,13 @@ Route::middleware([
         return UserImpersonation::makeResponse($token);
     });
 
-
     Route::middleware(['auth', 'verified'])->group(function () {
         Route::livewire('/mypage', 'pages::tenants.mypage')->name('tenant.my-page');
         Route::livewire('/profile', 'pages::tenants.profile')->name('tenant.profile');
+    });
+
+    Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
+
         Route::livewire('/dashboard', 'pages::dashboard.home')->name('dashboard');
         Route::livewire('/dashboard/events', 'pages::dashboard.events')->name('dashboard.events');
         Route::livewire('/dashboard/users', 'pages::dashboard.users')->name('dashboard.users');

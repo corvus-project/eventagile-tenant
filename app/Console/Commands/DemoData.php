@@ -30,27 +30,31 @@ class DemoData extends Command
     public function handle()
     {
         $tenant = Tenant::where('email', 'acme@example.com')->first();
-        $tenant->run(function () {
-            EventRegistration::truncate();
-            Event::truncate();
-            User::truncate();
+        if ($tenant) {
+            $this->info('Data will refresh');
+            $tenant->run(function () {
+                EventRegistration::truncate();
+                Event::truncate();
+                User::truncate();
 
-            $users = User::factory()->user()->count(100)->create();
+                $users = User::factory()->user()->count(100)->create();
 
-            $events = Event::factory()
-                ->count(15)
-                ->create();
+                $events = Event::factory()
+                    ->count(15)
+                    ->create();
 
-            EventRegistration::factory(500)
-                ->recycle($events)
-                ->recycle($users)->create();
+                EventRegistration::factory(500)
+                    ->recycle($events)
+                    ->recycle($users)->create();
 
-            $user = User::factory()->create([
-                'name' => 'Test Tenant',
-                'email' => 'acme@example.com',
-            ]);
-            $adminRole = config('roles.models.role')::where('name', '=', 'Admin')->first();
-            $user->attachRole($adminRole);
-        });
+                $user = User::factory()->create([
+                    'name' => 'Test Tenant',
+                    'email' => 'acme@example.com',
+                ]);
+                $adminRole = config('roles.models.role')::where('name', '=', 'Admin')->first();
+                $user->attachRole($adminRole);
+            });
+            $this->info('Fresh sample data is populated!');
+        }
     }
 }
