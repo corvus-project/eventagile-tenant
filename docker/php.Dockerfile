@@ -42,7 +42,6 @@ RUN docker-php-ext-install -j$(nproc) \
     gd \
     zip \
     intl \
-    opcache \
     sodium
 
 # Copy Composer binary
@@ -72,7 +71,6 @@ RUN mkdir -p \
 
 # Install production Composer dependencies during the image build
 RUN composer install \
-    --no-dev \
     --no-interaction \
     --prefer-dist \
     --optimize-autoloader

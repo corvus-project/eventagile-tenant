@@ -14,7 +14,19 @@ class SQLiteDatabaseManager implements TenantDatabaseManager
     public function createDatabase(TenantWithDatabase $tenant): bool
     {
         try {
-            return file_put_contents(database_path(self::dbpath . $tenant->database()->getName()), '');
+            $path = $this->path($tenant->database()->getName());
+
+            if (! is_dir(dirname($path))) {
+                mkdir(dirname($path), 0775, true);
+            }
+
+            $created = file_put_contents($path, '') !== false;
+
+            if ($created) {
+                chmod($path, 0664);
+            }
+
+            return $created;
         } catch (\Throwable $th) {
             return false;
         }
@@ -23,7 +35,7 @@ class SQLiteDatabaseManager implements TenantDatabaseManager
     public function deleteDatabase(TenantWithDatabase $tenant): bool
     {
         try {
-            return unlink(database_path(self::dbpath . $tenant->database()->getName()));
+            return unlink($this->path($tenant->database()->getName()));
         } catch (\Throwable $th) {
             return false;
         }
@@ -31,12 +43,12 @@ class SQLiteDatabaseManager implements TenantDatabaseManager
 
     public function databaseExists(string $name): bool
     {
-        return file_exists(database_path(self::dbpath . $name));
+        return file_exists($this->path($name));
     }
 
     public function makeConnectionConfig(array $baseConfig, string $databaseName): array
     {
-        $baseConfig['database'] = database_path(self::dbpath . $databaseName);
+        $baseConfig['database'] = $this->path($databaseName);
 
         return $baseConfig;
     }
@@ -44,5 +56,10 @@ class SQLiteDatabaseManager implements TenantDatabaseManager
     public function setConnection(string $connection): void
     {
         //
+    }
+
+    private function path(string $databaseName): string
+    {
+        return database_path(self::dbpath . $databaseName);
     }
 }
