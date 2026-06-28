@@ -73,8 +73,8 @@
 
 
 
-/* maryUI */
-@source "../../vendor/robsontenorio/mary/src/View/Components/**/*.php";
+/* maryUI - removed, use native Tailwind instead */
+/* @source "../../vendor/robsontenorio/mary/src/View/Components/**/*.php"; */
 
 .mary-table-pagination {
 

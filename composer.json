@@ -25,7 +25,6 @@
         "owen-it/laravel-auditing": "^14.0",
         "php-http/guzzle7-adapter": "^1.1",
         "railsware/mailtrap-php": "^3.12",
-        "robsontenorio/mary": "^2.8",
         "spatie/laravel-sluggable": "^3.7",
         "stancl/tenancy": "^3.10",
         "symfony/mailer": "^7.4"

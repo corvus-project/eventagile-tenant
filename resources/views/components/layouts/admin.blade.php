@@ -23,7 +23,6 @@
 
 <body class="min-h-screen font-sans antialiased bg-blue-900 dark:bg-gray-900">
     {{ $slot }}
-    <x-toast />
 
 </body>
 
