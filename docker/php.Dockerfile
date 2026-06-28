@@ -4,7 +4,9 @@ WORKDIR /app
 
 # Build Vite assets so Laravel can read public/build/manifest.json
 COPY package*.json ./
-
+RUN npm install
+COPY . .
+RUN npm run build
 
 FROM php:8.4.16-fpm
 
@@ -76,14 +78,6 @@ RUN composer install \
     --no-interaction \
     --prefer-dist \
     --optimize-autoloader
-
-RUN npm install
-COPY . .
-RUN npm run build
-
-RUN composer dump-autoload --optimize \
-    && php artisan package:discover --ansi
-RUN php artisan mary:install --npm --no-css
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
