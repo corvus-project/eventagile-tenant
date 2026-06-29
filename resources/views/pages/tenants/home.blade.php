@@ -8,7 +8,7 @@ use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Computed;
 
-new #[Layout('layouts.tenant')]  class extends Component
+new #[Layout('layouts.ea-yoga')]  class extends Component
 {
     use WithPagination;
 
@@ -24,7 +24,7 @@ new #[Layout('layouts.tenant')]  class extends Component
     public function events()
     {
         try {
-            return Event::paginate();
+            return Event::paginate(9);
         } catch (QueryException $ex) {
             Log::error('Tenant Id:' . tenant('id') .  $ex->getMessage());
             abort(500, 'Tenant does not exist or database is not migrated.');
@@ -38,47 +38,76 @@ new #[Layout('layouts.tenant')]  class extends Component
 <x-slot name="title">
     {{ tenant('name') }} - Home
 </x-slot>
-<x-slot name="header">
-    <h2 class="text-3xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
-
-    </h2>
+<x-slot name="tenant_name">
+    {{ tenant('name') }}
 </x-slot>
-<div class="pb-5">
-    <div class="mx-auto space-y-6">
+<x-slot name="hero">
+    {{ tenant('name') }}
+</x-slot>
 
-        <h2 class="text-3xl">Welcome to {{ tenant('name') }}</h2>
+<!-- Hero Section -->
 
-        @if ($this->events->count() < 1)
+<div>
 
-            <div role="alert" class="alert alert-warning">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <span>There is no active events!</span>
-    </div>
 
-    @endif
-    @foreach($this->events as $event)
-    <div class="p-4 bg-white rounded-lg shadow mt-8  dark:bg-gray-800 dark:border dark:border-gray-200/10">
 
-        <a href="{{ route('tenant.event.view', $event) }}" class="block">
-            <h4 class="text-lg font-semibold">{{ $event->title }}</h4>
-        </a>
-        <p class="text-sm text-gray-600">
-            Date: {{ $event->start_time->format('F j, Y H:i') }}
-            Please register until {{ $event->registration_deadline ? $event->registration_deadline->format('F j, Y H:i') : 'N/A' }}.
-        </p>
-        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            <x-icon name="o-envelope" /> Organizer: {{ $event->organizer }}
-            <x-icon name="o-map-pin" /> Location: {{ $event->location }}
-            <x-icon name="o-users" /> Capacity: {{ $event->capacity }}
-        </p>
-        <blockquote class="mt-2">{{ $event->description }}</blockquote>
-    </div>
-    @endforeach
+    <!-- Classes Section -->
+    <section id="classes" class="py-16 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-12 text-center">Available Classes</h2>
 
-    <div class="mt-4 flex justify-end-safe gap-1">
-        {{ $this->events->links() }}
-    </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                @foreach($this->events as $event)
+                <!-- Class 1: Beginner Yoga -->
+                <div class="bg-white rounded-xl shadow-md overflow-hidden card-hover">
+                    <div class="h-12 bg-gradient-to-br from-green-400 to-teal-500 relative">
+                        <span
+                            class="absolute top-4 right-4 bg-white text-primary px-3 py-1 rounded-full text-xs font-semibold"></span>
+                        <div class="absolute bottom-4 left-4 text-white">
+
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">{{ $event->title }}</h3>
+                        <p class="text-gray-600 mb-4">{{ $event->description }}</p>
+
+                        <div class="space-y-2 mb-4">
+                            <div class="flex items-center text-sm text-gray-600">
+                                <x-icon name="o-calendar" class="text-primary mr-2" />
+                                <span>Date: {{ $event->start_time->format('F j, Y H:i') }}</span>
+                            </div>
+                            <div class="flex items-center text-sm text-gray-600">
+                                <x-icon name="o-envelope" class="text-primary mr-2" /> <span> Organizer: {{ $event->organizer }}</span>
+                            </div>
+                            <div class="flex items-center text-sm text-gray-600">
+                                <x-icon name="o-users" class="text-primary mr-2" /> <span> Capacity: {{ $event->capacity }}</span>
+                            </div>
+                            <div class="flex items-center text-sm text-gray-600">
+                                <x-icon name="o-map-pin" class="text-primary mr-2" />
+                                <span>Location: {{ $event->location }}</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between pt-4 border-t">
+                            <div>
+
+                            </div>
+                            <a href="{{ route('tenant.event.view', $event) }}"
+                                class="bg-primary text-white px-6 py-2 rounded-lg font-medium hover:bg-secondary transition inline-block">
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+            <div class="mt-4 flex justify-end-safe gap-1">
+                {{ $this->events->links() }}
+            </div>
+        </div>
+    </section>
+
 </div>
+
+
 </div>

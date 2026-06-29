@@ -27,10 +27,11 @@ Route::middleware([
     InitializeTenancyByDomainOrSubdomain::class,
     PreventAccessFromCentralDomains::class,
 ])->group(function () {
-
-    Route::livewire('/notenant', 'pages::tenants.notenant')->name('tenant.notenant');
     Route::livewire('/', 'pages::tenants.home')->name('tenant.home');
-    Route::livewire('/events/{event:slug}', 'pages::tenants.event-view')->name('tenant.event.view');
+    Route::livewire('/list', 'pages::tenants.list')->name('tenant.list');
+    Route::livewire('/events/{event:slug}', 'pages::tenants.view')->name('tenant.event.view');
+    Route::livewire('/about', 'pages::tenants.about')->name('tenant.about');
+    Route::livewire('/notenant', 'pages::tenants.notenant')->name('tenant.notenant');
 
     Route::get('/impersonate/{token}', function ($token) {
         return UserImpersonation::makeResponse($token);
