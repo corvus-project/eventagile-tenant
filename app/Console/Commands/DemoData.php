@@ -38,10 +38,31 @@ class DemoData extends Command
                 Event::truncate();
                 User::truncate();
 
-                Setting::create([
-                    'name' => 'name',
-                    'payload' => 'Acme Sample Site'
-                ]);
+
+                $settings = [
+                    [
+                        'name' => 'site_name',
+                        'payload' => 'Acme Sample Site'
+                    ],
+                    [
+                        'name' => 'site_slogan',
+                        'payload' => 'Find Your Inner Peace with Toga'
+                    ],
+                    [
+                        'name' => 'site_description',
+                        'payload' => 'Join Acme\'s yoga classes and transform your mind, body, and soul. Suitable for all levels.'
+                    ],
+                    [
+                        'name' => 'contact',
+                        'payload' => 'Westgate Brewery \nBury St Edmunds \nSuffolk \n IP33 1QT'
+                    ],
+                    [
+                        'name' => 'about',
+                        'payload' => ''
+                    ]
+
+                ];
+                Setting::create($settings);
 
                 $users = User::factory()->user()->count(100)->create();
 

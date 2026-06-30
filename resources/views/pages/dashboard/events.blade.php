@@ -5,7 +5,6 @@ use App\Models\Event;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Livewire\Component;
-use Mary\Traits\Toast;
 use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Computed;
@@ -13,7 +12,7 @@ use Livewire\Attributes\Computed;
 new #[Layout('layouts.admin')]  class extends Component
 {
     use WithPagination;
-    use Toast;
+
     public int $perPage = 10;
     public string $search = '';
     public array $sortBy = ['column' => 'start_time', 'direction' => 'desc'];
@@ -71,7 +70,6 @@ new #[Layout('layouts.admin')]  class extends Component
         $clonedEvent->status = EventStatus::DRAFT->value; // Set status to draft for cloned event
         $clonedEvent->save();
 
-        $this->toast('success', 'Event cloned successfully');
         return redirect()->route('dashboard.events.update', ['event' => $clonedEvent->slug]);
     }
 };

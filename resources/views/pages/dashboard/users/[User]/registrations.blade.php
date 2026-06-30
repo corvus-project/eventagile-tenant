@@ -80,11 +80,11 @@ new #[Layout('layouts.admin')] class extends Component {
                                             <td class="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">{{ $registration->status ?? 'Unknown' }}</td>
                                             <td class="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">{{ optional($registration->registered_at)->format('F j, Y H:i') ?? 'N/A' }}</td>
                                             <td class="px-4 py-4 text-right">
-                                                <a href="{{ route('dashboard.events.registrations.show', ['event' => $registration->event]) }}" class="btn-ghost btn-sm text-sm text-blue-600 p-2">
+                                                <a href="{{ route('dashboard.events.registrations.show', ['event' => $registration->event]) }}" class="btn-ghost btn-sm text-sm text-blue-600 p-2 >
                                                     All Registrations
                                                 </a>
 
-                                                <a href="{{ route('dashboard.registration.view', $registration->id) }}" class="btn-ghost btn-sm text-sm text-blue-600 p-2">
+                                                <a href=" {{ route('dashboard.registration.view', $registration->id) }}" class="btn-ghost btn-sm text-sm text-blue-600 p-2">
                                                     View Details
                                                 </a>
                                             </td>

@@ -33,10 +33,32 @@ class TenantDatabaseSeeder extends Seeder
         $events = Event::factory(10)->create();
         EventRegistration::factory(500)->recycle($events)->create();
 
-        Setting::create([
-            'name' => 'name',
-            'payload' => 'Tenant Sample Site'
-        ]);
+        $settings = [
+            [
+                'name' => 'site_name',
+                'payload' => 'Acme Sample Site'
+            ],
+            [
+                'name' => 'site_slogan',
+                'payload' => 'Find Your Inner Peace with Toga'
+            ],
+            [
+                'name' => 'site_description',
+                'payload' => 'Join Acme\'s yoga classes and transform your mind, body, and soul. Suitable for all levels.'
+            ],
+            [
+                'name' => 'contact',
+                'payload' => 'Westgate Brewery \nBury St Edmunds \nSuffolk \n IP33 1QT'
+            ],
+            [
+                'name' => 'about',
+                'payload' => ''
+            ]
+
+        ];
+        Setting::create($settings);
+
+
 
         $user = User::factory()->create([
             'name' => 'Test Tenant',
