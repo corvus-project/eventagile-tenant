@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Model;
 use Livewire\Livewire;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Notifications\Messages\MailMessage;
+use App\Models\User;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -52,6 +53,9 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('view-event', [EventPolicy::class, 'view']);
         Gate::define('view-any-event', [EventPolicy::class, 'viewAny']);
 
+        Gate::define('update-settings', function (User $user) {
+            return $user->hasRole('admin') ?? false;
+        });
 
         /*         if (app()->environment('local', 'staging') && !$this->isMigrationOrSeederCommand()) {
             DB::listen(function ($query) {
