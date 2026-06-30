@@ -44,7 +44,9 @@
     </nav>
 
     @if (isset($hero))
-    <x-ui.ea.hero />
+    <x-ui.ea.hero>
+        {{$hero}}
+    </x-ui.ea.hero>
     @endif
 
     @if (isset($list_header))

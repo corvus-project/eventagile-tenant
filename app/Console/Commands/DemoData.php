@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Event;
 use App\Models\EventRegistration;
+use App\Models\Setting;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Console\Command;
@@ -36,6 +37,11 @@ class DemoData extends Command
                 EventRegistration::truncate();
                 Event::truncate();
                 User::truncate();
+
+                Setting::create([
+                    'name' => 'name',
+                    'payload' => 'Acme Sample Site'
+                ]);
 
                 $users = User::factory()->user()->count(100)->create();
 

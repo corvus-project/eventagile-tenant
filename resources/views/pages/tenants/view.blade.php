@@ -88,11 +88,11 @@ new #[Layout('layouts.ea-yoga')]  class extends Component
 ?>
 
 <x-slot name="title">
-    {{ tenant('name') }} - Home
+    {{ Setting::get('site_name') }} - Home
 </x-slot>
 
 <x-slot name="tenant_name">
-    {{ tenant('name') }}
+    {{ Setting::get('site_name') }}
 </x-slot>
 
 <x-slot name="event_hero">
@@ -166,7 +166,7 @@ new #[Layout('layouts.ea-yoga')]  class extends Component
                             Please register until {{ $event->registration_deadline ? $event->registration_deadline->format('F j, Y H:i') : 'N/A' }}.
                         </p>
 
-                        {{$event->description}}
+                        {{$event->full_description}}
 
                     </div>
                 </div>

@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\Tenant;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;

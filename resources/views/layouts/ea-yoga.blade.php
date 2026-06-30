@@ -8,15 +8,15 @@
         {{ $tenant_name }}
     </x-slot>
 
-    @if (isset($hero))
-    <x-slot name="hero">
-        {{ $hero }}
-    </x-slot>
-    @endif
-
     @if (isset($list_header))
     <x-slot name="list_header">
         {{ $list_header }}
+    </x-slot>
+    @endif
+
+    @if (isset($hero))
+    <x-slot name="hero">
+        {{ $hero }}
     </x-slot>
     @endif
 
@@ -50,11 +50,9 @@
 
                 <div>
                     <h4 class="font-semibold mb-4">Contact</h4>
-                    <ul class="space-y-2 text-gray-400">
-                        <li><i class="fas fa-phone mr-2"></i>(555) 123-4567</li>
-                        <li><i class="fas fa-envelope mr-2"></i>sarah@yogastudio.com</li>
-                        <li><i class="fas fa-map-marker-alt mr-2"></i>123 Wellness Street</li>
-                    </ul>
+                    <div class="space-y-2 text-gray-400">
+                        {{ Setting::get('contact')}}
+                    </div>
                 </div>
             </div>
 

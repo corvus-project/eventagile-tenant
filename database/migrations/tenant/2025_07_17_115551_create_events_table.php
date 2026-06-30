@@ -18,6 +18,7 @@ return new class extends Migration
 
             $table->text('title');
             $table->text('description')->nullable();
+            $table->text('full_description')->nullable();
             $table->string('slug')->unique()->nullable();
             $table->string('registration_code')->unique()->nullable();
             $table->dateTime('start_time');

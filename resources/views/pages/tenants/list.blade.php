@@ -36,13 +36,13 @@ new #[Layout('layouts.ea-yoga')]  class extends Component
 }
 ?>
 <x-slot name="title">
-    {{ tenant('name') }} - Home
+    {{ Setting::get('site_name') }} - Home
 </x-slot>
 <x-slot name="tenant_name">
-    {{ tenant('name') }}
+    {{ Setting::get('site_name') }}
 </x-slot>
 <x-slot name="list_header">
-    {{ tenant('name') }}
+    {{ Setting::get('site_name') }}
 </x-slot>
 <div>
 
@@ -109,6 +109,4 @@ new #[Layout('layouts.ea-yoga')]  class extends Component
             </div>
         </div>
     </section>
-</div>
-
 </div>

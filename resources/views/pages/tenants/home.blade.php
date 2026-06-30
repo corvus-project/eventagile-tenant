@@ -8,6 +8,7 @@ use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Computed;
 
+
 new #[Layout('layouts.ea-yoga')]  class extends Component
 {
     use WithPagination;
@@ -36,13 +37,33 @@ new #[Layout('layouts.ea-yoga')]  class extends Component
 }
 ?>
 <x-slot name="title">
-    {{ tenant('name') }} - Home
+    {{ Setting::get('site_name') }} - Home
 </x-slot>
 <x-slot name="tenant_name">
-    {{ tenant('name') }}
+    {{ Setting::get('site_name') }}
 </x-slot>
 <x-slot name="hero">
-    {{ tenant('name') }}
+    <section class="gradient-bg text-white py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div>
+                    <h1 class="text-4xl md:text-5xl font-bold mb-6">{{ Setting::get('site_slogan') }}</h1>
+                    <p class="text-xl mb-8 text-green-50">{{ Setting::get('site_description') }}</p>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <a href="{{route('tenant.list')}}"
+                            class="bg-white text-primary px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 transition text-center">
+                            View Classes
+                        </a>
+
+                    </div>
+                </div>
+                <div class="hidden md:block">
+                    <img src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600&h=400&fit=crop" alt="Yoga"
+                        class="rounded-2xl shadow-2xl">
+                </div>
+            </div>
+        </div>
+    </section>
 </x-slot>
 
 <!-- Hero Section -->
@@ -106,8 +127,5 @@ new #[Layout('layouts.ea-yoga')]  class extends Component
             </div>
         </div>
     </section>
-
-</div>
-
 
 </div>

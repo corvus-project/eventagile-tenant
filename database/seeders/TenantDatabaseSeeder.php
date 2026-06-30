@@ -6,6 +6,7 @@ use App\Models\Account;
 use App\Models\EventRegistration;
 use App\Models\Event;
 use App\Models\Plan;
+use App\Models\Setting;
 use App\Models\User;
 use App\Models\Subscription;
 use App\Models\Tenant;
@@ -31,6 +32,11 @@ class TenantDatabaseSeeder extends Seeder
         echo 'Creating events...' . PHP_EOL;
         $events = Event::factory(10)->create();
         EventRegistration::factory(500)->recycle($events)->create();
+
+        Setting::create([
+            'name' => 'name',
+            'payload' => 'Tenant Sample Site'
+        ]);
 
         $user = User::factory()->create([
             'name' => 'Test Tenant',
