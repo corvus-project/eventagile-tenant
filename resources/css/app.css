@@ -4,6 +4,19 @@
     themes: eventagile --default, dark --prefersdark;
 }
 
+.gradient-bg {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.card-hover {
+    transition: all 0.3s ease;
+}
+
+.card-hover:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
 @plugin "daisyui/theme" {
     name: "eventagile";
     default: true;
@@ -69,48 +82,4 @@
 
 [x-cloak] {
     display: none;
-}
-
-
-
-/* maryUI - removed, use native Tailwind instead */
-
-
-.mary-table-pagination {
-
-    button,
-    span {
-        @apply text-xs border-none
-    }
-
-    button {
-        @apply cursor-pointer
-    }
-
-    span[aria-current="page"]>span {
-        @apply bg-base-content/5
-    }
-
-    button, span[aria-current="page"]>span, span[aria-disabled="true"] span {
-        @apply py-1 px-2
-    }
-}
-
-/**
-* Paginator - Traditional style
-* Because Laravel defaults does not match well the design of daisyUI.
-*/
-
-.mary-table-pagination span[aria-current="page"]>span {
-    @apply bg-primary text-base-100
-}
-
-.mary-table-pagination button {
-    @apply cursor-pointer
-}
-
-.header__logo {
-    color: #0071bc;
-    overflow-wrap: break-word;
-
 }

@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Event;
 use App\Models\EventRegistration;
+use App\Models\Setting;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Console\Command;
@@ -36,6 +37,32 @@ class DemoData extends Command
                 EventRegistration::truncate();
                 Event::truncate();
                 User::truncate();
+
+
+                $settings = [
+                    [
+                        'name' => 'site_name',
+                        'payload' => 'Acme Sample Site'
+                    ],
+                    [
+                        'name' => 'site_slogan',
+                        'payload' => 'Find Your Inner Peace with Toga'
+                    ],
+                    [
+                        'name' => 'site_description',
+                        'payload' => 'Join Acme\'s yoga classes and transform your mind, body, and soul. Suitable for all levels.'
+                    ],
+                    [
+                        'name' => 'contact',
+                        'payload' => 'Westgate Brewery \nBury St Edmunds \nSuffolk \n IP33 1QT'
+                    ],
+                    [
+                        'name' => 'about',
+                        'payload' => ''
+                    ]
+
+                ];
+                Setting::create($settings);
 
                 $users = User::factory()->user()->count(100)->create();
 

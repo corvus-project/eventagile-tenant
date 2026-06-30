@@ -19,6 +19,7 @@ class OnBoardingService
                 'email' => $tenantData['admin_email'],
                 'password' => $tenantData['admin_password'],
             ]);
+            $this->createSettingsTable();
         });
         $this->createSubscriptions($tenant);
     }
@@ -77,5 +78,33 @@ class OnBoardingService
             'plan_name' => $plan->name,
             'plan_description' => $plan->description,
         ]);
+    }
+
+    private function createSettingsTable()
+    {
+        $settings = [
+            [
+                'name' => 'site_name',
+                'payload' => 'Acme Sample Site'
+            ],
+            [
+                'name' => 'site_slogan',
+                'payload' => 'Find Your Inner Peace with Toga'
+            ],
+            [
+                'name' => 'site_description',
+                'payload' => 'Join Acme\'s yoga classes and transform your mind, body, and soul. Suitable for all levels.'
+            ],
+            [
+                'name' => 'contact',
+                'payload' => 'Westgate Brewery \nBury St Edmunds \nSuffolk \n IP33 1QT'
+            ],
+            [
+                'name' => 'about',
+                'payload' => ''
+            ]
+
+        ];
+        Setting::create($settings);
     }
 }

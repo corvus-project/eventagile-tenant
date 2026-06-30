@@ -7,12 +7,10 @@ use App\Models\Tenant;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
-use Mary\Traits\Toast;
 use Livewire\Attributes\Layout;
 
 new #[Layout('layouts.admin')]  class extends Component
 {
-    use Toast;
     public $status;
 
     public $eventLimit = true;
