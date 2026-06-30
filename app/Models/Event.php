@@ -21,6 +21,7 @@ class Event extends Model implements Auditable
     protected $fillable = [
         'title',
         'description',
+        'full_description',
         'start_time',
         'location',
         'organizer',

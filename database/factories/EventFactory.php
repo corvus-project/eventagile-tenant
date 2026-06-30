@@ -23,7 +23,7 @@ class EventFactory extends Factory
         return [
             'title' => $this->faker->randomElement(['Toga for Beginners', 'Advanced Toga Techniques', 'Toga Party Planning', 'Toga History and Culture']),
             'description' => $this->faker->paragraph,
-            'full_description' => $this->faker->paragraphs(4),
+            'full_description' => $this->faker->paragraph,
             //'slug' => $this->faker->unique()->slug,
             'start_time' => $startTime,
             'registration_deadline' => $registrationDeadline,

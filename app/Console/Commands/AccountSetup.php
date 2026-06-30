@@ -73,7 +73,7 @@ class AccountSetup extends Command
             ]);
 
             $tenant->domains()->create([
-                'domain' => str_slug($account->domain),
+                'domain' => str_slug($account->domain) . '.' . config('app.url'),
             ]);
 
             Log::debug('Tenant Creation: ', [

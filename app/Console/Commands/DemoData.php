@@ -37,32 +37,29 @@ class DemoData extends Command
                 EventRegistration::truncate();
                 Event::truncate();
                 User::truncate();
+                Setting::truncate();
 
+                Setting::create([
+                    'name' => 'site_name',
+                    'payload' => 'Acme Toga Studio'
+                ]);
 
-                $settings = [
-                    [
-                        'name' => 'site_name',
-                        'payload' => 'Acme Sample Site'
-                    ],
-                    [
-                        'name' => 'site_slogan',
-                        'payload' => 'Find Your Inner Peace with Toga'
-                    ],
-                    [
-                        'name' => 'site_description',
-                        'payload' => 'Join Acme\'s yoga classes and transform your mind, body, and soul. Suitable for all levels.'
-                    ],
-                    [
-                        'name' => 'contact',
-                        'payload' => 'Westgate Brewery \nBury St Edmunds \nSuffolk \n IP33 1QT'
-                    ],
-                    [
-                        'name' => 'about',
-                        'payload' => ''
-                    ]
-
-                ];
-                Setting::create($settings);
+                Setting::create([
+                    'name' => 'site_slogan',
+                    'payload' => 'Find Your Inner Peace with Toga'
+                ]);
+                Setting::create([
+                    'name' => 'site_description',
+                    'payload' => 'Join Acme\'s yoga classes and transform your mind, body, and soul. Suitable for all levels.'
+                ]);
+                Setting::create([
+                    'name' => 'contact',
+                    'payload' => 'Westgate Brewery \nBury St Edmunds \nSuffolk \n IP33 1QT'
+                ]);
+                Setting::create([
+                    'name' => 'about',
+                    'payload' => ''
+                ]);
 
                 $users = User::factory()->user()->count(100)->create();
 
