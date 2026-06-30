@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Plan;
+use App\Models\Setting;
 use App\Models\Tenant;
 use App\Models\User;
 use Carbon\Carbon;
@@ -82,29 +83,22 @@ class OnBoardingService
 
     private function createSettingsTable()
     {
-        $settings = [
-            [
-                'name' => 'site_name',
-                'payload' => 'Acme Sample Site'
-            ],
-            [
-                'name' => 'site_slogan',
-                'payload' => 'Find Your Inner Peace with Toga'
-            ],
-            [
-                'name' => 'site_description',
-                'payload' => 'Join Acme\'s yoga classes and transform your mind, body, and soul. Suitable for all levels.'
-            ],
-            [
-                'name' => 'contact',
-                'payload' => 'Westgate Brewery \nBury St Edmunds \nSuffolk \n IP33 1QT'
-            ],
-            [
-                'name' => 'about',
-                'payload' => ''
-            ]
 
-        ];
-        Setting::create($settings);
+        Setting::create([
+            'name' => 'site_slogan',
+            'payload' => 'Find Your Inner Peace with Toga'
+        ]);
+        Setting::create([
+            'name' => 'site_description',
+            'payload' => 'Join Acme\'s yoga classes and transform your mind, body, and soul. Suitable for all levels.'
+        ]);
+        Setting::create([
+            'name' => 'contact',
+            'payload' => 'Westgate Brewery \nBury St Edmunds \nSuffolk \n IP33 1QT'
+        ]);
+        Setting::create([
+            'name' => 'about',
+            'payload' => ''
+        ]);
     }
 }
