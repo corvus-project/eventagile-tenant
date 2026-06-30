@@ -83,6 +83,10 @@ class OnBoardingService
 
     private function createSettingsTable()
     {
+        Setting::create([
+            'name' => 'site_name',
+            'payload' => 'Acme Toga Studio'
+        ]);
 
         Setting::create([
             'name' => 'site_slogan',

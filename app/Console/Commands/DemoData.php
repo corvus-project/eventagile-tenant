@@ -40,6 +40,11 @@ class DemoData extends Command
                 Setting::truncate();
 
                 Setting::create([
+                    'name' => 'site_name',
+                    'payload' => 'Acme Toga Studio'
+                ]);
+
+                Setting::create([
                     'name' => 'site_slogan',
                     'payload' => 'Find Your Inner Peace with Toga'
                 ]);
