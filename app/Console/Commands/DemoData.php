@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\EventStatus;
 use App\Models\Event;
 use App\Models\EventRegistration;
 use App\Models\Setting;
@@ -66,6 +67,16 @@ class DemoData extends Command
                 $events = Event::factory()
                     ->count(15)
                     ->create();
+
+
+                $events = Event::factory()
+                    ->count(5)
+                    ->create(
+                        [
+                            'start_time' => Now()->addDays(1),
+                            'status' => EventStatus::SCHEDULED->value,
+                        ]
+                    );
 
                 EventRegistration::factory(500)
                     ->recycle($events)

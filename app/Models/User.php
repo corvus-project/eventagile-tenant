@@ -2,8 +2,6 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -14,7 +12,6 @@ use App\Services\SubscriptionService;
 use App\Services\VerifyEmailQueued;
 use Database\Factories\UserFactory;
 use Illuminate\Support\Facades\Log;
-use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable  implements MustVerifyEmail
 {

@@ -15,7 +15,6 @@ class Tenant extends BaseTenant implements TenantWithDatabase
     use HasDatabase;
     use HasDomains;
 
-
     public static function getCustomColumns(): array
     {
         return [
@@ -52,7 +51,7 @@ class Tenant extends BaseTenant implements TenantWithDatabase
         });
     }
 
-    public function able($action)
+    public function able(string $action)
     {
         Log::info('Checking ability for user ID: ' . $this->id . ' and action: ' . $action);
         return app(SubscriptionService::class)->can($this, $action);

@@ -17,6 +17,8 @@ class EventForm extends Form
 
     public $description;
 
+    public $full_description;
+
     #[Validate('required|date|after:today')]
     public $start_time;
 
@@ -30,7 +32,7 @@ class EventForm extends Form
     public string $organizer;
 
     #[Validate(['required', 'integer', new CapacityLimit()])]
-    public $capacity;
+    public int $capacity;
 
     #[Validate('boolean')]
     public bool $is_public = false;
@@ -45,6 +47,7 @@ class EventForm extends Form
 
         $this->title = $event->title;
         $this->description = $event->description;
+        $this->full_description = $event->full_description;
         $this->start_time =  $event->start_time->format('Y-m-d H:i'); //'2025-10-12 13:10'; //$event->start_time->format('dd/mm/Y h:i'); // Ensure the format is compatible with datetime-local input
         $this->registration_deadline = $event->registration_deadline?->format('Y-m-d H:i');
         $this->location = $event->location;
@@ -63,6 +66,7 @@ class EventForm extends Form
         Event::create([
             'title' => $this->title,
             'description' => $this->description,
+            'full_description' => $this->full_description,
             'start_time' => $this->start_time,
             'registration_deadline' => $this->registration_deadline,
             'location' => $this->location,
@@ -84,6 +88,7 @@ class EventForm extends Form
             $this->event->update([
                 'title' => $this->title,
                 'description' => $this->description,
+                'full_description' => $this->full_description,
                 'start_time' => $this->start_time,
                 'registration_deadline' => $this->registration_deadline,
                 'location' => $this->location,

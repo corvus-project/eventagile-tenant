@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\EventStatus;
 use App\Models\Event;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
@@ -24,7 +25,7 @@ new #[Layout('layouts.ea-yoga')]  class extends Component
     public function events()
     {
         try {
-            return Event::paginate(9);
+            return Event::where('status', '=', EventStatus::SCHEDULED->value)->where('start_time', '>', now())->orderBy('start_time', 'asc')->paginate(9);
         } catch (QueryException $ex) {
             Log::error('Tenant Id:' . tenant('id') .  $ex->getMessage());
             abort(500, 'Tenant does not exist or database is not migrated.');
