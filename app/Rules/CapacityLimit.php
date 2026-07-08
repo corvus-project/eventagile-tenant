@@ -15,15 +15,11 @@ class CapacityLimit implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        $user = auth()->user();
-        /*         if ($user) {
-            $maxCapacity = app('App\Services\SubscriptionService')->getRegistrationLimit($user);
-            Log::info('User ID: ' . $user->id . ' has a max registration limit of: ' . $maxCapacity);
-            if ($maxCapacity > 0 && $value > $maxCapacity) {
-                $fail("The {$attribute} exceeds your subscription limit of {$maxCapacity}.");
-            }
-        } else {
-            $fail("Unable to validate {$attribute} as user is not authenticated.");
-        } */
+        $tenant = tenant();
+        $maxCapacity = app('App\Services\SubscriptionService')->getRegistrationLimit($tenant);
+        Log::info('Tenant ID: ' . $tenant->id . ' has a max registration limit of: ' . $maxCapacity);
+        if ($maxCapacity > 0 && $value > $maxCapacity) {
+            $fail("The {$attribute} exceeds your subscription limit of {$maxCapacity}.");
+        }
     }
 }

@@ -30,7 +30,6 @@ new #[Layout('layouts.auth')] class extends Component
         $this->captchaToken = $token;
         Log::info('Starting authentication process for email: ' . $this->email);
 
-        Log::debug('Captcha token received', ['email' => $this->email, 'captchaToken' => $this->captchaToken]);
         $query = http_build_query([
             'secret' => config('services.recaptcha.secret_key'),
             'response' => $this->captchaToken,

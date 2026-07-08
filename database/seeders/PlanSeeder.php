@@ -22,7 +22,7 @@ class PlanSeeder extends Seeder
                 'interval' => 'month',
                 'interval_count' => 1,
                 'features' => json_encode(['Access to basic features', 'Email support']),
-                'limitations' => json_encode(['max_events' => 100, 'max_registrations' => 1000, 'sending_emails' => false]),
+                'limitations' => json_encode(['max_events' => 3, 'max_registrations' => 50, 'sending_emails' => false]),
                 'is_active' => true,
             ],
             [
@@ -34,7 +34,7 @@ class PlanSeeder extends Seeder
                 'interval' => 'month',
                 'interval_count' => 1,
                 'features' => json_encode(['Access to all features', 'Priority email support', 'Team collaboration']),
-                'limitations' => json_encode(['Up to 50 events per month']),
+                'limitations' => json_encode(['max_events' => 100, 'max_registrations' => 500, 'sending_emails' => true]),
                 'is_active' => false,
             ],
             [

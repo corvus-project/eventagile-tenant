@@ -37,23 +37,6 @@ class DatabaseSeeder extends Seeder
         $this->call(ConnectRelationshipsSeeder::class);
 
 
-        $foo_user = User::factory()->create([
-            'name' => 'Foo User',
-            'email' => 'foo@example.com',
-        ]);
-        $role = config('roles.models.role')::where('name', '=', 'User')->first();
-        $foo_user->attachRole($role);
-
-        $tenant1 = Tenant::create([
-            'id' => 'foo',
-            'user_id' => $foo_user->id,
-            'name' => 'Foo Tenant',
-            'email' => 'foo@example.com',
-            'is_active' => true,
-        ]);
-        $tenant1->domains()->create(['domain' => 'foo.localhost']);
-
-
         (config('database.default') != 'sqlite') ?? DB::statement('SET FOREIGN_KEY_CHECKS=1;');
         $user = User::factory()->create([
             'name' => 'Test User',
