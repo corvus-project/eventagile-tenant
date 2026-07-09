@@ -60,9 +60,10 @@ COPY . /var/www/html
 # Copy built Vite assets into the PHP image for Laravel's @vite manifest lookup
 COPY --from=assets /app/public/build /var/www/html/public/build
 
-# Copy configs
+# Copy configs and entrypoint
 COPY ./docker/supervisord.conf /etc/supervisord.conf
 # COPY ./docker/nginx.conf /etc/nginx/sites-available/default
+COPY ./docker/entrypoint.sh /entrypoint.sh
 
 # Create Supervisor log and run directories
 RUN mkdir -p /var/log/supervisor /var/run/supervisor
@@ -74,7 +75,8 @@ RUN mkdir -p \
     /var/www/html/storage/framework/sessions \
     /var/www/html/storage/framework/views \
     /var/www/html/storage/logs \
-    /var/www/html/bootstrap/cache
+    /var/www/html/bootstrap/cache \
+    /var/www/html/database/tenants
 
 # Install production Composer dependencies during the image build
 RUN composer install \
@@ -83,9 +85,11 @@ RUN composer install \
     --optimize-autoloader
 
 # Set permissions
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database/tenants \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database/tenants \
+    && chmod +x /entrypoint.sh
 
 EXPOSE 9000
 
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["php-fpm"]
