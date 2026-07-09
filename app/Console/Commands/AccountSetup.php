@@ -32,6 +32,8 @@ class AccountSetup extends Command
     public function handle()
     {
         $accounts = ModelsAccountSetup::whereIn('action', ['SETUP', 'RESETUP'])->get();
+
+        Log::debug('Account setup command started. Number of accounts to process: ' . $accounts->count());
         foreach ($accounts as $account) {
 
             Log::debug('Account setup: ' . $account->user_id);

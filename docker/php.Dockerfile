@@ -64,6 +64,9 @@ COPY --from=assets /app/public/build /var/www/html/public/build
 COPY ./docker/supervisord.conf /etc/supervisord.conf
 # COPY ./docker/nginx.conf /etc/nginx/sites-available/default
 
+# Create Supervisor log and run directories
+RUN mkdir -p /var/log/supervisor /var/run/supervisor
+
 # Create Laravel writable directories before Composer runs artisan scripts
 RUN mkdir -p \
     /var/www/html/storage/app \

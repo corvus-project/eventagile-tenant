@@ -9,6 +9,7 @@ use App\Models\Setting;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class DemoData extends Command
 {
@@ -32,6 +33,9 @@ class DemoData extends Command
     public function handle()
     {
         $tenant = Tenant::where('email', 'acme@example.com')->first();
+        Log::debug('Demo data command started.');
+
+        Log::info('Demo data command started. - info');
         if ($tenant) {
             $this->info('Data will refresh');
             $tenant->run(function () {
