@@ -30,6 +30,7 @@ mkdir -p "$SHARED_DIR/storage/framework/sessions"
 mkdir -p "$SHARED_DIR/storage/framework/views"
 mkdir -p "$SHARED_DIR/storage/app/public"
 mkdir -p "$SHARED_DIR/storage/logs"
+mkdir -p "$SHARED_DIR/database/tenants"
 
 # Extract artifact into release dir
 tar -xzf "$ARTIFACT_PATH" -C "$RELEASE_DIR"
@@ -40,6 +41,10 @@ if [ -f "$SHARED_DIR/.env" ]; then
 else
   echo "Warning: $SHARED_DIR/.env not found. Please create before running deploy."
 fi
+
+# Link tenant databases to shared
+rm -rf "$RELEASE_DIR/database/tenants"
+ln -sf "$SHARED_DIR/database/tenants" "$RELEASE_DIR/database/tenants"
 
 # Link storage to shared
 rm -rf "$RELEASE_DIR/storage"
