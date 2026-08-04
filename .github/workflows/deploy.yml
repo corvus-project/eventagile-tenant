@@ -38,7 +38,7 @@ jobs:
 
       - name: Install composer dependencies
         run: |
-          composer install --no-dev --prefer-dist --optimize-autoloader --no-progress
+          composer install --prefer-dist --optimize-autoloader --no-progress
 
       - name: Build front-end (if applicable)
         run: |
