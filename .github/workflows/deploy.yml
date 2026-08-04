@@ -1,60 +1,179 @@
-name: Deploy SaaS
+# GitHub Actions workflow for building artifact and deploying to a single server via SSH
+# Place this as .github/workflows/deploy.yml in the repository (adjust paths as needed)
+# Required repository secrets:
+# - SSH_PRIVATE_KEY
+# - SSH_USERNAME (name of the SSH user account on the server)
+# - SSH_HOST
+# - SSH_PORT (optional, default 22)
+# - DEPLOY_PATH (e.g., /var/www/eventagile-tenant)
+# - DEPLOY_KEEP_RELEASES (optional, default 5)
+
+name: Build and Deploy
 
 on:
   push:
     branches:
-      - dev-release
-
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME_PHP: ${{ github.repository_owner }}/eventagile-tenant-php
-  IMAGE_NAME_NGINX: ${{ github.repository_owner }}/eventagile-tenant-nginx
+      - main
 
 jobs:
-  build-and-deploy:
+  build:
+    name: Build artifact
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
+    outputs:
+      artifact-name: ${{ steps.create-artifact.outputs.artifact }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, xml, bcmath, curl, gd, intl, zip, pdo_mysql
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+
+      - name: Install composer dependencies
+        run: |
+          composer install --no-dev --prefer-dist --optimize-autoloader --no-progress
+
+      - name: Build front-end (if applicable)
+        run: |
+          if [ -f package.json ]; then
+            # Prefer npm ci for reproducible installs when package-lock.json exists
+            if [ -f package-lock.json ]; then
+              npm ci
+            else
+              echo "package-lock.json not found — using npm install (consider committing package-lock.json for reproducible builds)"
+              npm install
+            fi
+            npm run build
+          else
+            echo "No package.json found — skipping frontend build"
+          fi
+
+      - name: Prepare artifact
+        id: create-artifact
+        run: |
+          ARTIFACT_NAME="eventagile-artifact-${GITHUB_RUN_NUMBER}.tar.gz"
+          mkdir -p release
+
+          # Copy tracked files into release using git ls-files + cp --parents
+          # This is robust in CI and avoids empty archives when git archive behaves unexpectedly
+          git ls-files -z | xargs -0 --no-run-if-empty cp --parents -t release || true
+
+          # include vendor (built on Actions) so server doesn't need to run composer
+          if [ -d vendor ]; then
+            cp -R vendor release/vendor
+          fi
+
+          # include built public assets if present
+          # Some setups place the Vite build under public/build, others under public/public/build
+          mkdir -p release/public
+          if [ -d public/build ]; then
+            echo "Including public/build -> release/public/build"
+            cp -R public/build release/public/build
+          fi
+          if [ -d public/public/build ]; then
+            echo "Including public/public/build -> release/public/build"
+            mkdir -p release/public/public
+            cp -R public/public/build release/public/build
+          fi
+
+          # Debug: show what we included
+          echo "Release folder contents (top-level):"
+          ls -la release || true
+          echo "Release/public contents:"
+          ls -la release/public || true
+
+          # Ensure Vite manifest is present — fail fast if not
+          if [ ! -f release/public/build/manifest.json ]; then
+            echo "Error: Vite manifest not found at release/public/build/manifest.json"
+            echo "Listing public/build (if present):"
+            ls -la public/build || true
+            echo "Listing public/public/build (if present):"
+            ls -la public/public/build || true
+            echo "Aborting artifact creation to avoid deploying broken assets."
+            exit 1
+          fi
+
+          # Debug / fail fast if release dir is empty
+          if [ -z "$(ls -A release || true)" ]; then
+            echo "Error: release directory is empty — cannot create artifact"
+            echo "Working directory: $(pwd)"
+            echo "Git tracked files:" 
+            git ls-files || true
+            echo "Filesystem listing:" 
+            ls -la || true
+            exit 1
+          fi
+
+          # create archive from release dir
+          tar -czf "$ARTIFACT_NAME" -C release .
+          mkdir -p ./artifacts
+          mv "$ARTIFACT_NAME" ./artifacts/
+          echo "artifact=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifact
+          path: ./artifacts/
+
+  deploy:
+    name: Deploy to server
+    runs-on: ubuntu-latest
+    needs: build
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3
+      - name: Download artifact
+        uses: actions/download-artifact@v4
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          name: release-artifact
+          path: release-artifact
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and push PHP image
-        uses: docker/build-push-action@v5
+      - name: Setup SSH key (agent)
+        uses: webfactory/ssh-agent@v0.7.0
         with:
-          context: .
-          file: docker/php.Dockerfile
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_PHP }}:latest
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Build and push Nginx image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: docker/nginx.Dockerfile
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_NGINX }}:latest
+      - name: Inspect downloaded artifact
+        run: |
+          echo "******"
+          ls -la
+          find . -maxdepth 3 -type f | sort
+          echo "Shell glob test for release-artifact/*.tar.gz:"
+          ls release-artifact/*.tar.gz || true
 
-      - name: Deploy to Server
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            # Navigate to the new app directory on the server
-            cd /app         
-            docker compose pull saas-nginx saas-php saas-worker
-            docker compose up -d saas-nginx saas-php saas-worker
+      - name: Upload artifact to server
+        run: |
+          echo "Artifact files in release-artifact:"
+          ls -la release-artifact
+          scp -o StrictHostKeyChecking=no release-artifact/*.tar.gz "${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}/releases/"
+
+      - name: Upload deploy helper to server
+        run: |
+          scp -o StrictHostKeyChecking=no deploy/deploy.sh "${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}/"
+
+      - name: Run remote deploy script
+        run: |
+          ssh -o StrictHostKeyChecking=no "${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}" \
+            "cd '${{ secrets.DEPLOY_PATH }}' && chmod +x deploy.sh && ARTIFACT=\$(ls -1 releases/*.tar.gz | tail -n1) && ./deploy.sh \"\$ARTIFACT\""
+
+      - name: Post-deploy smoke test
+        run: |
+          echo "Waiting 5s for services to settle..."
+          sleep 5
+          # Replace with your health endpoint
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://eventagile.com/up)
+          echo "Checking the live site health endpoint, got HTTP status: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "Health check failed with status $HTTP_STATUS"
+            exit 1
+          fi
+          echo "Deployment looks healthy"
