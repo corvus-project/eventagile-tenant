@@ -2,10 +2,13 @@
 
 namespace Database\Factories;
 
+use App\Models\Plan;
+use App\Models\Subscription;
+use App\Models\Tenant;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Subscription>
+ * @extends Factory<Subscription>
  */
 class SubscriptionFactory extends Factory
 {
@@ -16,18 +19,20 @@ class SubscriptionFactory extends Factory
      */
     public function definition(): array
     {
-        $plan = \App\Models\Plan::inRandomOrder()->first();
+        $plan = Plan::inRandomOrder()->first();
+        $tenant = Tenant::inRandomOrder()->first();
+
         return [
-            'user_id' => \App\Models\User::factory(),
+            'tenant_id' => $tenant?->id,
             'starts_at' => $this->faker->dateTimeBetween('-1 year', 'now'),
             'ends_at' => $this->faker->dateTimeBetween('now', '+1 year'),
             'status' => $this->faker->randomElement(['active', 'inactive', 'cancelled']),
-            'plan_id' => $plan->id,
-            'interval' => $plan->interval,
-            'plan_limitations' => $plan->limitations,
-            'plan_features' => $plan->features,
-            'plan_name' => $plan->name,
-            'plan_description' => $plan->description,
+            'plan_id' => $plan?->id,
+            'interval' => $plan?->interval,
+            'plan_limitations' => $plan?->limitations,
+            'plan_features' => $plan?->features,
+            'plan_name' => $plan?->name,
+            'plan_description' => $plan?->description,
         ];
     }
 }

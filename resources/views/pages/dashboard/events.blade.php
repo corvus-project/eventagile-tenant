@@ -2,6 +2,8 @@
 
 use App\Enums\EventStatus;
 use App\Models\Event;
+use App\Models\Tenant;
+use App\Services\SubscriptionService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Livewire\Component;
@@ -62,6 +64,15 @@ new #[Layout('layouts.admin')]  class extends Component
 
     public function cloneEvent(int $id)
     {
+        $tenant = Tenant::findOrFail(tenant('id'));
+
+        $result = SubscriptionService::canWithReason($tenant, 'create-event');
+
+        if (! $result['allowed']) {
+            $this->dispatch('error', message: $result['reason']);
+            return;
+        }
+
         $event = Event::findOrFail($id);
 
         $clonedEvent = $event->replicate();

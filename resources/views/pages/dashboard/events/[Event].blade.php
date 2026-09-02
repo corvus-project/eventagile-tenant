@@ -55,7 +55,7 @@ new #[Layout('layouts.admin')] class extends  Component {
                     <strong>{{ __('Date:') }}</strong> {{ $this->event->start_time->format('F j, Y') }}
                 </div>
                 <div class="mb-4">
-                    <strong>{{ __('Registration Ends At:') }}</strong> {{ $this->event->registration_ends_at?->format('F j, Y') }}
+                    <strong>{{ __('Registration Ends At:') }}</strong> {{ $this->event->registration_deadline?->format('F j, Y') }}
                 </div>
                 <div class="mb-4">
                     <strong>{{ __('Location:') }}</strong> {{ $this->event->location }}

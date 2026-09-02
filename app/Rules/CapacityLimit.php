@@ -2,24 +2,31 @@
 
 namespace App\Rules;
 
+use App\Models\Tenant;
+use App\Services\SubscriptionService;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
-use Illuminate\Support\Facades\Log;
 
+/**
+ * Enforces the tenant-wide registration quota (max_registrations)
+ * and that the tenant has an active, non-expired subscription.
+ *
+ * Attach to any non-empty field on a registration form (e.g. user_id).
+ */
 class CapacityLimit implements ValidationRule
 {
-    /**
-     * Run the validation rule.
-     *
-     * @param  \Closure(string, ?string=): \Illuminate\Translation\PotentiallyTranslatedString  $fail
-     */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         $tenant = tenant();
-        $maxCapacity = app('App\Services\SubscriptionService')->getRegistrationLimit($tenant);
-        Log::info('Tenant ID: ' . $tenant->id . ' has a max registration limit of: ' . $maxCapacity);
-        if ($maxCapacity > 0 && $value > $maxCapacity) {
-            $fail("The {$attribute} exceeds your subscription limit of {$maxCapacity}.");
+
+        if (! $tenant instanceof Tenant) {
+            return;
+        }
+
+        $result = SubscriptionService::canWithReason($tenant, 'register');
+
+        if (! $result['allowed']) {
+            $fail($result['reason']);
         }
     }
 }

@@ -46,7 +46,7 @@ new #[Layout('layouts.ea-yoga')]  class extends Component
             return false;
         }
 
-        if (!empty($this->event->registration_ends_at) && $this->event->registration_ends_at > now()) {
+        if ($this->event->registration_deadline && $this->event->registration_deadline < now()) {
             $this->errorMessage = 'Registration is ended for this event';
             return false;
         }
