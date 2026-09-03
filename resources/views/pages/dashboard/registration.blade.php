@@ -4,6 +4,8 @@ use App\Enums\RegistrationStatus;
 use App\Mail\EventRegistrationUpdated;
 use App\Models\Event;
 use App\Models\EventRegistration;
+use App\Models\Tenant;
+use App\Services\SubscriptionService;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Component;
 use Mary\Traits\Toast;
@@ -49,12 +51,15 @@ new #[Layout('layouts.admin')] class extends Component {
         $this->success('Registration updated successfully!');
         $this->eventRegistrationModal = false;
 
-        Mail::to($this->eventRegistration->email)->queue(new EventRegistrationUpdated($this->event, [
-            'name' => $this->eventRegistration->user->name,
-            'email' => $this->eventRegistration->user->email,
-            'phone' => $this->eventRegistration->user->phone,
-            'status' => $this->eventRegistration->status->value,
-        ]));
+        $tenant = tenant();
+        if ($tenant instanceof Tenant && SubscriptionService::canSendEmails($tenant)) {
+            Mail::to($this->eventRegistration->email)->queue(new EventRegistrationUpdated($this->event, [
+                'name' => $this->eventRegistration->user->name,
+                'email' => $this->eventRegistration->user->email,
+                'phone' => $this->eventRegistration->user->phone,
+                'status' => $this->eventRegistration->status->value,
+            ]));
+        }
     }
 }
 ?>

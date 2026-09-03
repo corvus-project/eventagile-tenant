@@ -41,6 +41,19 @@ class Tenant extends BaseTenant implements TenantWithDatabase
         return $this->hasMany(Subscription::class);
     }
 
+    public function activeSubscription()
+    {
+        return $this->hasOne(Subscription::class)
+            ->ofMany('starts_at', 'max')
+            ->where('status', 'active')
+            ->where(function ($q) {
+                $q->whereNull('ends_at')->orWhere('ends_at', '>=', now());
+            })
+            ->where(function ($q) {
+                $q->whereNull('starts_at')->orWhere('starts_at', '<=', now());
+            });
+    }
+
     public function adminUsers()
     {
         return $this->run(function () {

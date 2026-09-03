@@ -24,9 +24,11 @@ use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 Route::middleware([
     'web',
     'universal',
+    'tenant.subscription',
     InitializeTenancyByDomainOrSubdomain::class,
     PreventAccessFromCentralDomains::class,
 ])->group(function () {
+    Route::livewire('/subscription-expired', 'pages::tenants.subscription-expired')->name('tenant.subscription.expired');
     Route::livewire('/', 'pages::tenants.home')->name('tenant.home');
     Route::livewire('/list', 'pages::tenants.list')->name('tenant.list');
     Route::livewire('/events/{event:slug}', 'pages::tenants.view')->name('tenant.event.view');

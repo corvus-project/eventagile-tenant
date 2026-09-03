@@ -59,10 +59,10 @@ new #[Layout('layouts.tenant')]  class extends Component
                 <p class="text-sm text-gray-600">
                     Date: {{ $eventRegistration->event->start_time->format('F j, Y H:i') }}
                 </p>
-                <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                    <x-icon name="o-envelope" /> Organizer: {{ $eventRegistration->event->organizer }}
-                    <x-icon name="o-map-pin" /> Location: {{ $eventRegistration->event->location }}
-                    <x-icon name="o-users" /> Capacity: {{ $eventRegistration->event->capacity }}
+                <p class="mt-2 flex items-center gap-2 overflow-x-auto whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                    <span class="inline-flex items-center"><x-heroicon-o-envelope class="text-primary mr-2 size-5 shrink-0" />Organizer: {{ $eventRegistration->event->organizer }}</span>
+                    <span class="inline-flex items-center"><x-heroicon-o-map-pin class="text-primary mr-2 size-5 shrink-0" />Location: {{ $eventRegistration->event->location }}</span>
+                    <span class="inline-flex items-center"><x-heroicon-o-users class="text-primary mr-2 size-5 shrink-0" />Capacity: {{ $eventRegistration->event->capacity }}</span>
                 </p>
                 <blockquote class="mt-2">{{ $eventRegistration->event->description }}</blockquote>
             </div>

@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'redirect-to-dashboard' => \App\Http\Middleware\RedirectToDashboard::class,
             'role' => \jeremykenedy\LaravelRoles\App\Http\Middleware\VerifyRole::class,
+            'tenant.subscription' => \App\Http\Middleware\EnsureTenantHasActiveSubscription::class,
         ]);
         $middleware->group('universal', []);
         $middleware->trustProxies(

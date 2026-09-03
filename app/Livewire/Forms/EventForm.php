@@ -4,7 +4,9 @@ namespace App\Livewire\Forms;
 
 use App\Enums\EventStatus;
 use App\Models\Event;
-use App\Rules\CapacityLimit;
+use App\Models\Tenant;
+use App\Services\SubscriptionService;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Validate;
 use Livewire\Form;
 
@@ -31,7 +33,7 @@ class EventForm extends Form
     #[Validate('required|string|max:255')]
     public string $organizer;
 
-    #[Validate(['required', 'integer', new CapacityLimit()])]
+    #[Validate('required|integer|min:1')]
     public int $capacity;
 
     #[Validate('boolean')]
@@ -40,7 +42,6 @@ class EventForm extends Form
     #[Validate('required')]
     public $status;
 
-
     public function setEvent(Event $event): void
     {
         $this->event = $event;
@@ -48,7 +49,7 @@ class EventForm extends Form
         $this->title = $event->title;
         $this->description = $event->description;
         $this->full_description = $event->full_description;
-        $this->start_time =  $event->start_time->format('Y-m-d H:i'); //'2025-10-12 13:10'; //$event->start_time->format('dd/mm/Y h:i'); // Ensure the format is compatible with datetime-local input
+        $this->start_time = $event->start_time->format('Y-m-d H:i'); // '2025-10-12 13:10'; //$event->start_time->format('dd/mm/Y h:i'); // Ensure the format is compatible with datetime-local input
         $this->registration_deadline = $event->registration_deadline?->format('Y-m-d H:i');
         $this->location = $event->location;
         $this->organizer = $event->organizer;
@@ -60,6 +61,21 @@ class EventForm extends Form
     public function store(): void
     {
         $this->validate();
+
+        $tenant = tenant();
+        if (! $tenant instanceof Tenant) {
+            throw ValidationException::withMessages([
+                'title' => 'Unable to resolve the current tenant.',
+            ]);
+        }
+
+        $result = SubscriptionService::canWithReason($tenant, 'create-event');
+
+        if (! $result['allowed']) {
+            throw ValidationException::withMessages([
+                'title' => $result['reason'],
+            ]);
+        }
 
         $status = EventStatus::fromKey($this->status) ?? EventStatus::DRAFT;
         $user = auth()->user();
@@ -95,7 +111,7 @@ class EventForm extends Form
                 'organizer' => $this->organizer,
                 'capacity' => $this->capacity,
                 'is_public' => ($this->is_public) ? true : false,
-                'status' => $status->value
+                'status' => $status->value,
             ]);
         }
     }

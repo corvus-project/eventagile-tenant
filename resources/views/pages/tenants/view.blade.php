@@ -46,7 +46,7 @@ new #[Layout('layouts.ea-yoga')]  class extends Component
             return false;
         }
 
-        if (!empty($this->event->registration_ends_at) && $this->event->registration_ends_at > now()) {
+        if ($this->event->registration_deadline && $this->event->registration_deadline < now()) {
             $this->errorMessage = 'Registration is ended for this event';
             return false;
         }
@@ -109,27 +109,27 @@ new #[Layout('layouts.ea-yoga')]  class extends Component
                     <div class="grid grid-cols-2 gap-4 mb-6">
                         <div class="flex items-center">
                             <div>
-                                <x-icon name="o-calendar" class="text-white mr-2" />
+                                <x-heroicon-s-calendar class="text-primary mr-2 size-4" />
                                 {{ $event->start_time->format('F j, Y H:i') ?? ''}}
                             </div>
                         </div>
 
                         <div class="flex items-center">
-
                             <div>
-                                <x-icon name="o-map-pin" class="text-white mr-2" />
+                                <x-heroicon-o-map-pin class="text-primary mr-2 size-5" />
                                 <span>Location: {{ $event->location ?? '' }}</span>
                             </div>
                         </div>
                         <div class="flex items-center">
-                            <x-icon name="o-users" class="text-white mr-2" />
+                            <x-heroicon-o-users class="text-primary mr-2 size-5 " />
+
                             <span> Capacity: {{ $event->capacity ?? '' }}</span>
                         </div>
                     </div>
 
                     <div class="flex items-center">
                         <span id="eventOrganizer" class="text-1xl font-bold mr-4">
-                            <x-icon name="o-envelope" class="text-white mr-2" /> <span> Organizer: {{ $event->organizer ?? '' }}</span>
+                            <x-heroicon-o-envelope class="text-primary mr-2 size-5" /> <span> Organizer: {{ $event->organizer ?? '' }}</span>
                         </span>
 
                     </div>
@@ -192,15 +192,15 @@ new #[Layout('layouts.ea-yoga')]  class extends Component
                         @endif
 
                         <form onsubmit="handleSubmit(event)" class="mt-1 space-y-2">
-                            <x-input label="Name" wire:model="form.name" readonly />
-                            <x-input label="Email" wire:model="form.email" value="{{ $this->user->email ?? '' }}" readonly />
+                            <input label="Name" wire:model="form.name" readonly />
+                            <input label="Email" wire:model="form.email" value="{{ $this->user->email ?? '' }}" readonly />
 
                             @if(!$event->is_public)
-                            <x-input label="Registration Code" wire:model="form.registration_code" placeholder="Enter registration code" />
+                            <input label="Registration Code" wire:model="form.registration_code" placeholder="Enter registration code" />
                             @endif
 
 
-                            <x-button label="Register" rounded="md" class="btn-primary" type="primary" submit="true" />
+                            <button label="Register" rounded="md" class="btn-primary" type="primary" submit="true" />
                         </form>
 
                         @endif

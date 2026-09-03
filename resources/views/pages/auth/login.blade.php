@@ -86,16 +86,32 @@ new #[Layout('layouts.auth')] class extends Component
             <div class="bg-red-300 text-red-700 p-3 rounded">{{ $message }}</div>
             @enderror
             <form onsubmit="handleSubmit(event)" class="space-y-6">
+                <label for="email" class="block text-sm font-medium leading-5 text-gray-700 dark:text-gray-300">
+                    Email address
+                </label>
 
-                <x-ui.input label="Email address" type="email" id="email" name="email" wire:model="email" />
-                <x-ui.input label="Password" type="password" id="password" name="password" wire:model="password" />
+                <input type="email" id="email" name="email" wire:model="email" required autofocus class="appearance-none flex w-full h-10 px-3 py-2 text-sm bg-white dark:text-gray-300 dark:bg-white/[4%] border rounded-md border-gray-300 dark:border-white/10 ring-offset-background placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-gray-300 dark:focus:border-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200/60 dark:focus:ring-white/20 disabled:cursor-not-allowed disabled:opacity-50 @error($email) border-red-300 text-red-900 placeholder-red-300 focus:border-red-300 focus:ring-red @enderror" />
+
+
+                <label for="password" class="block text-sm font-medium leading-5 text-gray-700 dark:text-gray-300">
+                    Password
+                </label>
+
+                <input type="password" id="password" name="password" wire:model="password" required autofocus class="appearance-none flex w-full h-10 px-3 py-2 text-sm bg-white dark:text-gray-300 dark:bg-white/[4%] border rounded-md border-gray-300 dark:border-white/10 ring-offset-background placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-gray-300 dark:focus:border-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200/60 dark:focus:ring-white/20 disabled:cursor-not-allowed disabled:opacity-50 @error($password) border-red-300 text-red-900 placeholder-red-300 focus:border-red-300 focus:ring-red @enderror" />
+
                 <div class="flex items-center justify-between mt-6 text-sm leading-5">
-                    <x-ui.checkbox label="Remember me" id="remember" name="remember" wire:model="remember" />
-                    <x-ui.text-link href="{{ route('password.request') }}">Forgot your password?</x-ui.text-link>
+                    <checkbox label="Remember me" id="remember" name="remember" wire:model="remember" />
+
+
+                    <a href="{{ route('password.request') }}" class="text-gray-500 underline cursor-pointer dark:text-gray-400 dark:hover:text-gray-300 hover:text-gray-800">
+                        {{ __('Forgot your password?') }}
+                    </a>
                 </div>
 
 
-                <x-button label="Login" rounded="md" class="btn-primary" type="primary" submit="true" />
+                <button class="bg-blue-600 text-white hover:bg-blue-600/90 focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-900 focus:bg-blue-700/90 focus:ring-blue-700 px-5 py-3  text-sm font-medium rounded-md" type="submit">
+                    Sign in
+                </button>
 
             </form>
 

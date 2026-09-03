@@ -72,25 +72,22 @@ new #[Layout('layouts.ea-yoga')]  class extends Component
                                 <span class="text-3xl font-bold text-primary ml-4"></span>
                             </div>
 
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 my-4">
+                            <div class="grid grid-cols-3 md:grid-cols-3 gap-4 my-4">
                                 <div class="flex items-center text-sm text-gray-600">
-                                    <x-icon name="o-calendar" class="text-primary mr-2" />
-                                    <span>Date: {{ $event->start_time->format('F j, Y H:i') }}</span>
+                                    <x-heroicon-s-calendar class="text-primary mr-2 size-5" /> <span>{{ $event->start_time->format('F j, Y H:i') }}</span>
                                 </div>
                                 <div class="flex items-center text-sm text-gray-600">
-                                    <x-icon name="o-map-pin" class="text-primary mr-2" />
-                                    <span>Location: {{ $event->location }}</span>
+                                    <x-heroicon-o-map-pin class="text-primary mr-2 size-5" /><span>{{ $event->location }}</span>
                                 </div>
                                 <div class="flex items-center text-sm text-gray-600">
-                                    <x-icon name="o-users" class="text-primary mr-2" /> <span> Capacity: {{ $event->capacity }}</span>
+                                    <x-heroicon-o-users class="text-primary mr-2 size-5" /> <span> {{ $event->capacity }}</span>
                                 </div>
                             </div>
 
                             <div class="flex items-center justify-between pt-4 border-t">
                                 <div class="flex items-center">
-
                                     <div>
-                                        <x-icon name="o-envelope" class="text-primary mr-2" /> <span> Organizer: {{ $event->organizer }}</span>
+                                        <x-heroicon-o-envelope class="text-primary mr-2 size-5" /> <span> {{ $event->organizer }}</span>
                                     </div>
                                 </div>
                                 <a href="{{ route('tenant.event.view', $event) }}"

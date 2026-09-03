@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Plan;
 use Illuminate\Database\Seeder;
 
 class PlanSeeder extends Seeder
@@ -46,13 +46,13 @@ class PlanSeeder extends Seeder
                 'interval' => 'month',
                 'interval_count' => 1,
                 'features' => json_encode(['Dedicated account manager', '24/7 support', 'Custom integrations']),
-                'limitations' => json_encode(['Unlimited events']),
+                'limitations' => json_encode(['max_events' => -1, 'max_registrations' => -1, 'sending_emails' => true]),
                 'is_active' => false,
             ],
         ];
 
         foreach ($plans as $plan) {
-            \App\Models\Plan::updateOrCreate(
+            Plan::updateOrCreate(
                 ['slug' => $plan['slug']],
                 $plan
             );
