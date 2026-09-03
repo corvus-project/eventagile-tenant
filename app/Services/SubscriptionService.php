@@ -26,7 +26,6 @@ class SubscriptionService
     public static function canWithReason(Tenant $tenant, string $action): array
     {
         $action = Str::camel($action);
-
         return match ($action) {
             'createEvent' => (new self)->createEvent($tenant),
             'sendEmails' => (new self)->sendEmails($tenant),
@@ -54,7 +53,7 @@ class SubscriptionService
             if ($sub->status !== 'active') {
                 return [
                     'allowed' => false,
-                    'reason' => 'Your subscription is no longer active (status: '.$sub->status.').',
+                    'reason' => 'Your subscription is no longer active (status: ' . $sub->status . ').',
                 ];
             }
 
@@ -84,11 +83,11 @@ class SubscriptionService
         $count = Event::query()->count();
 
         if ($count >= $limit) {
-            Log::warning('Tenant ID: '.$tenant->id.' reached the max events limit ('.$limit.').');
+            Log::warning('Tenant ID: ' . $tenant->id . ' reached the max events limit (' . $limit . ').');
 
             return [
                 'allowed' => false,
-                'reason' => 'You have reached the maximum number of events ('.$limit.') allowed by your plan.',
+                'reason' => 'You have reached the maximum number of events (' . $limit . ') allowed by your plan.',
             ];
         }
 
@@ -112,11 +111,11 @@ class SubscriptionService
         $total = $this->registrationsTotal($tenant);
 
         if ($total >= $limit) {
-            Log::warning('Tenant ID: '.$tenant->id.' reached the max registrations limit ('.$limit.').');
+            Log::warning('Tenant ID: ' . $tenant->id . ' reached the max registrations limit (' . $limit . ').');
 
             return [
                 'allowed' => false,
-                'reason' => 'You have reached the maximum number of registrations ('.$limit.') allowed by your plan.',
+                'reason' => 'You have reached the maximum number of registrations (' . $limit . ') allowed by your plan.',
             ];
         }
 
@@ -152,7 +151,7 @@ class SubscriptionService
             ->first();
 
         if (! $this->subscription) {
-            Log::warning('No active subscription found for tenant ID: '.$tenant->id);
+            Log::warning('No active subscription found for tenant ID: ' . $tenant->id);
         }
 
         return $this->subscription;

@@ -28,7 +28,8 @@ new #[Layout('layouts.ea-yoga')]  class extends Component
 <div class="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4">
     <div class="w-full max-w-lg rounded-xl bg-white dark:bg-gray-800 shadow-lg p-8 text-center">
         <div class="flex justify-center mb-6">
-            <x-icon name="o-exclamation-triangle" class="w-12 h-12 text-amber-500" />
+
+            <x-heroicon-s-exclamation-triangle class="w-12 h-12 text-amber-500 mr-2 size-5" />
         </div>
 
         <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
@@ -44,18 +45,18 @@ new #[Layout('layouts.ea-yoga')]  class extends Component
         </p>
 
         @auth
-            <form method="POST" action="{{ route('tenant.logout') }}">
-                @csrf
-                <button type="submit"
-                    class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700">
-                    {{ __('Logout') }}
-                </button>
-            </form>
+        <form method="POST" action="{{ route('tenant.logout') }}">
+            @csrf
+            <button type="submit"
+                class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700">
+                {{ __('Logout') }}
+            </button>
+        </form>
         @else
-            <a href="{{ route('login') }}"
-               class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700">
-                {{ __('Login') }}
-            </a>
+        <a href="{{ route('login') }}"
+            class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700">
+            {{ __('Login') }}
+        </a>
         @endauth
     </div>
 </div>

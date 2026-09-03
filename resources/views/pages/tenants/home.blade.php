@@ -94,17 +94,17 @@ new #[Layout('layouts.ea-yoga')]  class extends Component
 
                         <div class="space-y-2 mb-4">
                             <div class="flex items-center text-sm text-gray-600">
-                                <x-icon name="o-calendar" class="text-primary mr-2" />
+                                <x-heroicon-s-calendar class="text-primary mr-2 size-5" />
                                 <span>Date: {{ $event->start_time->format('F j, Y H:i') }}</span>
                             </div>
                             <div class="flex items-center text-sm text-gray-600">
-                                <x-icon name="o-envelope" class="text-primary mr-2" /> <span> Organizer: {{ $event->organizer }}</span>
+                                <x-heroicon-o-envelope class="text-primary mr-2 size-5" /> <span> Organizer: {{ $event->organizer }}</span>
                             </div>
                             <div class="flex items-center text-sm text-gray-600">
-                                <x-icon name="o-users" class="text-primary mr-2" /> <span> Capacity: {{ $event->capacity }}</span>
+                                <x-heroicon-o-users class="text-primary mr-2 size-5" /> <span> Capacity: {{ $event->capacity }}</span>
                             </div>
                             <div class="flex items-center text-sm text-gray-600">
-                                <x-icon name="o-map-pin" class="text-primary mr-2" />
+                                <x-heroicon-o-map-pin class="text-primary mr-2 size-5" />
                                 <span>Location: {{ $event->location }}</span>
                             </div>
                         </div>

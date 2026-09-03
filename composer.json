@@ -12,6 +12,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "blade-ui-kit/blade-heroicons": "^2.7",
         "blade-ui-kit/blade-icons": "^1.10",
         "codeat3/blade-coolicons": "^1.7",
         "codeat3/blade-iconpark": "^1.8",
