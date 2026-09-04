@@ -115,7 +115,7 @@ class SubscriptionService
 
             return [
                 'allowed' => false,
-                'reason' => 'You have reached the maximum number of registrations (' . $limit . ') allowed by your plan.',
+                'reason' => 'The site has reached the maximum number of registrations!',
             ];
         }
 
@@ -183,7 +183,7 @@ class SubscriptionService
         }
 
         $value = $sub->limitation('max_registrations', 0);
-        Log::debug('Value: ' . $value);
+        Log::debug('max_registrations: ' . $value);
         if (is_null($value)) {
             return null;
         }

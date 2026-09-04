@@ -53,7 +53,7 @@ new #[Layout('layouts.ea-yoga')]  class extends Component
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="space-y-6">
                 @foreach($this->events as $event)
-                <!-- Event 1: Beginner Yoga -->
+
                 <div class="bg-white rounded-xl shadow-md overflow-hidden card-hover">
                     <div class="grid md:grid-cols-3 gap-6">
                         <div class="h-48 md:h-auto bg-gradient-to-br from-green-400 to-teal-500 relative">
@@ -72,23 +72,18 @@ new #[Layout('layouts.ea-yoga')]  class extends Component
                                 <span class="text-3xl font-bold text-primary ml-4"></span>
                             </div>
 
-                            <div class="grid grid-cols-3 md:grid-cols-3 gap-4 my-4">
-                                <div class="flex items-center text-sm text-gray-600">
-                                    <x-heroicon-s-calendar class="text-primary mr-2 size-5" /> <span>{{ $event->start_time->format('F j, Y H:i') }}</span>
-                                </div>
-                                <div class="flex items-center text-sm text-gray-600">
-                                    <x-heroicon-o-map-pin class="text-primary mr-2 size-5" /><span>{{ $event->location }}</span>
-                                </div>
-                                <div class="flex items-center text-sm text-gray-600">
-                                    <x-heroicon-o-users class="text-primary mr-2 size-5" /> <span> {{ $event->capacity }}</span>
-                                </div>
-                            </div>
+
+                            <p class="my-2 flex items-center gap-2 overflow-x-auto whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                                <span class="inline-flex items-center"> <x-heroicon-s-calendar class="text-primary mr-2 size-5" /> {{ $event->start_time->format('F j, Y H:i') }}</span>
+                                <span class="inline-flex items-center"><x-heroicon-o-map-pin class="text-primary mr-2 size-5 shrink-0" />Location: {{ $event->location }}</span>
+                                <span class="inline-flex items-center"><x-heroicon-o-users class="text-primary mr-2 size-5 shrink-0" />Capacity: {{ $event->capacity }}</span>
+                            </p>
 
                             <div class="flex items-center justify-between pt-4 border-t">
                                 <div class="flex items-center">
-                                    <div>
-                                        <x-heroicon-o-envelope class="text-primary mr-2 size-5" /> <span> {{ $event->organizer }}</span>
-                                    </div>
+
+                                    <x-heroicon-o-envelope class="text-primary mr-2 size-5" /> <span> {{ $event->organizer }}</span>
+
                                 </div>
                                 <a href="{{ route('tenant.event.view', $event) }}"
                                     class="bg-primary text-white px-6 py-3 rounded-lg font-medium hover:bg-secondary transition">

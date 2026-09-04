@@ -20,7 +20,6 @@ new #[Layout('layouts.ea-yoga')]  class extends Component
     public ?string $email;
     public ?string $captchaToken = null;
     public EventRegistrationForm $form;
-
     public ?string $errorMessage;
 
     public bool $showForm = false;
@@ -82,8 +81,10 @@ new #[Layout('layouts.ea-yoga')]  class extends Component
         throw_if($captchaLevel <= 0.5, ValidationException::withMessages([
             'captchaToken' => __('Error on captcha verification. Please, refresh the page and try again.')
         ]));
-        Log::info('User registered for event', ['event_id' => $this->event->id]);
+
         $this->form->store();
+        Log::info('User registered for event', ['event_id' => $this->event->id]);
+        return redirect()->to(route('tenant.event.view', $this->event))->with('register-status', 'You have successfully registered for the event!');
     }
 }
 ?>
@@ -109,31 +110,29 @@ new #[Layout('layouts.ea-yoga')]  class extends Component
 
                     <div class="grid grid-cols-2 gap-4 mb-6">
                         <div class="flex items-center">
-                            <div>
-                                <x-heroicon-s-calendar class="text-primary mr-2 size-4" />
-                                {{ $event->start_time->format('F j, Y H:i') ?? ''}}
-                            </div>
+
+                            <x-heroicon-s-calendar class="text-white mr-2 size-5" />
+                            <span>{{ $event->start_time->format('F j, Y H:i') ?? '' }}</span>
+
                         </div>
 
                         <div class="flex items-center">
-                            <div>
-                                <x-heroicon-o-map-pin class="text-primary mr-2 size-5" />
-                                <span>Location: {{ $event->location ?? '' }}</span>
-                            </div>
+
+                            <x-heroicon-o-map-pin class="text-white mr-2 size-5" />
+                            <span>Location: {{ $event->location ?? '' }}</span>
+
                         </div>
                         <div class="flex items-center">
-                            <x-heroicon-o-users class="text-primary mr-2 size-5 " />
+                            <x-heroicon-o-users class="text-white mr-2 size-5 " />
 
                             <span> Capacity: {{ $event->capacity ?? '' }}</span>
                         </div>
+
+                        <div class="flex items-center">
+                            <x-heroicon-o-envelope class="text-white mr-2 size-5" /> <span> Organizer: {{ $event->organizer ?? '' }}</span>
+                        </div>
                     </div>
 
-                    <div class="flex items-center">
-                        <span id="eventOrganizer" class="text-1xl font-bold mr-4">
-                            <x-heroicon-o-envelope class="text-primary mr-2 size-5" /> <span> Organizer: {{ $event->organizer ?? '' }}</span>
-                        </span>
-
-                    </div>
                 </div>
                 <div class="hidden md:block">
                     <img id="eventImage"
@@ -153,15 +152,15 @@ new #[Layout('layouts.ea-yoga')]  class extends Component
 
 
     <!-- Event Details & Booking -->
-    <section class="py-16">
+    <section class="py-3">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid md:grid-cols-3 gap-8">
+            <div class="grid md:grid-cols-3 gap-2">
 
                 <!-- Left Column: Event Details -->
                 <div class="md:col-span-2 space-y-8">
 
                     <!-- About This Class -->
-                    <div class="bg-white rounded-xl shadow-md p-8">
+                    <div class="bg-white rounded-xl shadow-md p-6">
 
                         <p id="registration_deadline"><span class="font-bold">Registration Deadline:</span> <br>
                             Please register until {{ $event->registration_deadline ? $event->registration_deadline->format('F j, Y H:i') : 'N/A' }}.
@@ -176,10 +175,15 @@ new #[Layout('layouts.ea-yoga')]  class extends Component
                 <div class="md:col-span-1">
                     <div class="bg-white rounded-xl shadow-md p-6 sticky top-24">
                         <div class="mb-6">
-                            <h3 class="text-2xl font-bold text-gray-900 mb-2">Book This Class</h3>
+                            <h3 class="text-2xl font-bold text-gray-900 mb-2">Book this Class</h3>
                             <p class="text-gray-600">Reserve your spot today</p>
                         </div>
 
+                        @if ($this->form->getErrorBag()->any())
+                        <div class="alert alert-danger mb-4">
+                            {{ $this->form->getErrorBag()->first() }}
+                        </div>
+                        @endif
                         @if ($errorMessage)
                         <div class="alert alert-warning mb-4">
                             {{$errorMessage}}
