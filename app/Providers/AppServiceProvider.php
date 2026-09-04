@@ -2,22 +2,21 @@
 
 namespace App\Providers;
 
+use App\Models\User;
 use App\Policies\EventPolicy;
 use App\Policies\UserPolicy;
 use App\Services\Helper;
-use App\Services\VerifyEmailQueued;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
-use Illuminate\Auth\Notifications\VerifyEmail;
-use Illuminate\Notifications\Messages\MailMessage;
-use App\Models\User;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -32,8 +31,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Model::preventLazyLoading(
-            fn($query) => $this->app->environment('local')
-                ? logger()->warning('Lazy loading detected: ' . $query->toSql())
+            fn ($query) => $this->app->environment('local')
+                ? logger()->warning('Lazy loading detected: '.$query->toSql())
                 : null
         );
 
@@ -66,9 +65,8 @@ class AppServiceProvider extends ServiceProvider
             });
         } */
         RateLimiter::for('login', function (string $email, string $ip) {
-            return Limit::perMinute(5)->by($email . $ip);
+            return Limit::perMinute(5)->by($email.$ip);
         });
-
 
         /*         VerifyEmail::toMailUsing(function (object $notifiable, string $url) {
             Log::debug('URL: ' . $url);
@@ -92,6 +90,7 @@ class AppServiceProvider extends ServiceProvider
     private function isMigrationOrSeederCommand(): bool
     {
         $command = request()->server('argv')[1] ?? '';
+
         return in_array($command, ['migrate', 'migrate:fresh', 'migrate:reset', 'db:seed']);
     }
 }
