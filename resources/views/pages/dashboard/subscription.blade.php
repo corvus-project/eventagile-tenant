@@ -98,49 +98,54 @@ new #[Layout('layouts.admin')] class extends Component
         ];
     }
 
-    public function formatPrice(?float $price, string $currency = 'GBP'): string
+    public function cancelSubscription(): void
     {
-        if ($price === null || (float) $price === 0.0) {
-            return 'Free';
+        $tenant = tenant();
+
+        if (! $tenant instanceof Tenant) {
+            $this->error('Unable to resolve the current tenant.');
+
+            return;
         }
 
-        $symbol = match (strtoupper($currency)) {
-            'USD' => '$',
-            'EUR' => '€',
-            'GBP' => '£',
-            default => strtoupper($currency) . ' ',
-        };
+        if (! $this->currentSubscription) {
+            $this->error('No subscription found to cancel.');
 
-        return $symbol . number_format($price, 2);
+            return;
+        }
+
+        $result = SubscriptionService::cancelSubscription(
+            $tenant,
+            $this->currentSubscription,
+            auth()->id()
+        );
+
+        if ($result['allowed']) {
+            $this->success($result['message']);
+            $this->mount();
+        } else {
+            $this->error($result['message']);
+        }
     }
 
-    public function formatInterval(int $count, string $interval): string
+    public function reactivateSubscription(): void
     {
-        $unit = PlanInterval::tryFrom($interval)?->label() ?? $interval;
+        $tenant = tenant();
 
-        if ((int) $count === 1) {
-            return "per {$unit}";
+        if (! $tenant instanceof Tenant) {
+            $this->error('Unable to resolve the current tenant.');
+
+            return;
         }
 
-        return "every {$count} {$unit}s";
-    }
+        $result = SubscriptionService::reactivateSubscription($tenant, $this->currentSubscription);
 
-    public function planFeatures(?Plan $plan): array
-    {
-        if (! $plan || ! is_array($plan->features)) {
-            return [];
+        if ($result['allowed']) {
+            $this->success($result['message']);
+            $this->mount();
+        } else {
+            $this->error($result['message']);
         }
-
-        return $plan->features;
-    }
-
-    public function planLimitations(?Plan $plan): array
-    {
-        if (! $plan || ! is_array($plan->limitations)) {
-            return [];
-        }
-
-        return $plan->limitations;
     }
 };
 ?>
@@ -210,7 +215,7 @@ new #[Layout('layouts.admin')] class extends Component
                     <div>
                         <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ __('Amount') }}</dt>
                         <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                            {{ $this->formatPrice($currentSubscription->amount, $currentSubscription->currency ?? 'GBP') }}
+                            {{ formatPrice((float) $currentSubscription->amount, $currentSubscription->currency ?? 'GBP') }}
                         </dd>
                     </div>
                     @endif
@@ -218,7 +223,7 @@ new #[Layout('layouts.admin')] class extends Component
                     <div>
                         <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ __('Billing Interval') }}</dt>
                         <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                            {{ $this->formatInterval($currentSubscription->interval_count ?? 1, $currentSubscription->interval) }}
+                            {{ formatInterval((int) ($currentSubscription->interval_count ?? 1), $currentSubscription->interval) }}
                         </dd>
                     </div>
                     @endif
@@ -237,6 +242,45 @@ new #[Layout('layouts.admin')] class extends Component
                             {{ $currentSubscription->trial_ends_at->format('F j, Y') }}
                         </dd>
                     </div>
+                    @endif
+                </div>
+
+                @if($currentSubscription->isInGracePeriod())
+                <div class="mt-4 p-4 rounded-md bg-amber-50 border border-amber-200 dark:bg-amber-900/20 dark:border-amber-700/40">
+                    <div class="flex items-start">
+                        <svg class="w-5 h-5 text-amber-500 mt-0.5 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+                        </svg>
+                        <div>
+                            <h4 class="text-sm font-semibold text-amber-800 dark:text-amber-200">
+                                {{ __('Subscription cancelled') }}
+                            </h4>
+                            <p class="mt-1 text-sm text-amber-700 dark:text-amber-300">
+                                {{ __('Your subscription is cancelled. You can keep using the system until :date.', ['date' => $currentSubscription->ends_at->format('F j, Y')]) }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                @endif
+
+                <div class="mt-6 flex flex-wrap gap-3">
+                    @if($currentSubscription->status === 'active')
+                    <button
+                        type="button"
+                        wire:click="cancelSubscription"
+                        wire:confirm="{{ __('Are you sure you want to cancel your subscription? You will still have access until the end of your current billing period.') }}"
+                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                    >
+                        {{ __('Cancel Subscription') }}
+                    </button>
+                    @elseif($currentSubscription->isInGracePeriod())
+                    <button
+                        type="button"
+                        wire:click="reactivateSubscription"
+                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                    >
+                        {{ __('Reactivate Subscription') }}
+                    </button>
                     @endif
                 </div>
                 @else
@@ -320,8 +364,8 @@ new #[Layout('layouts.admin')] class extends Component
                     @foreach($this->plans as $plan)
                     @php
                     $isCurrent = $currentPlan && $currentPlan->id === $plan->id;
-                    $features = $this->planFeatures($plan);
-                    $limitations = $this->planLimitations($plan);
+                    $features = planFeatures($plan);
+                    $limitations = planLimitations($plan);
                     @endphp
                     <div @class([ 'bg-white dark:bg-gray-800 shadow sm:rounded-lg dark:bg-gray-900/50 dark:border dark:border-gray-200/10 p-6 flex flex-col' , 'ring-2 ring-blue-500'=> $isCurrent,
                         ])>
@@ -342,11 +386,11 @@ new #[Layout('layouts.admin')] class extends Component
 
                         <div class="mb-4">
                             <span class="text-3xl font-bold text-gray-900 dark:text-white">
-                                {{ $this->formatPrice((float) $plan->price, $plan->currency ?? 'GBP') }}
+                                {{ formatPrice((float) $plan->price, $plan->currency ?? 'GBP') }}
                             </span>
                             @if((float) $plan->price > 0)
                             <span class="text-sm text-gray-500 dark:text-gray-400">
-                                / {{ formatInterval($plan->interval_count ?? 1, $plan->interval ?? 'month') }}
+                                / {{ formatInterval((int) ($plan->interval_count ?? 1), $plan->interval ?? 'month') }}
                             </span>
                             @endif
                         </div>
@@ -426,10 +470,11 @@ new #[Layout('layouts.admin')] class extends Component
                                 </td>
                                 <td class="px-4 py-4 text-sm">
                                     <span @class([ 'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold' , 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'=> $sub->isActive(),
-                                        'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' => !$sub->isActive() && $sub->status === 'cancelled',
-                                        'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200' => !$sub->isActive() && $sub->status !== 'cancelled',
+                                        'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200' => $sub->isCancelled() && $sub->isInGracePeriod(),
+                                        'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' => $sub->isCancelled() && ! $sub->isInGracePeriod(),
+                                        'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200' => ! $sub->isActive() && ! $sub->isCancelled(),
                                         ])>
-                                        {{ ucfirst($sub->status) }}
+                                        {{ $sub->isCancelled() && $sub->isInGracePeriod() ? __('Cancelled (Grace Period)') : ucfirst($sub->status) }}
                                     </span>
                                 </td>
                                 <td class="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
@@ -440,7 +485,7 @@ new #[Layout('layouts.admin')] class extends Component
                                 </td>
                                 <td class="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
                                     @if($sub->amount)
-                                    {{ $this->formatPrice((float) $sub->amount, $sub->currency ?? 'GBP') }}
+                                    {{ formatPrice((float) $sub->amount, $sub->currency ?? 'GBP') }}
                                     @else
                                     —
                                     @endif

@@ -26,6 +26,7 @@ class SubscriptionService
     public static function canWithReason(Tenant $tenant, string $action): array
     {
         $action = Str::camel($action);
+
         return match ($action) {
             'createEvent' => (new self)->createEvent($tenant),
             'sendEmails' => (new self)->sendEmails($tenant),
@@ -45,25 +46,136 @@ class SubscriptionService
             ->latest('starts_at')
             ->first();
 
-        if ($sub && $sub->isActive()) {
-            return ['allowed' => true, 'reason' => ''];
+        if (! $sub) {
+            return ['allowed' => false, 'reason' => 'No active subscription found for your account.'];
         }
 
-        if ($sub) {
-            if ($sub->status !== 'active') {
+        if ($sub->isActive()) {
+            if ($sub->isInGracePeriod()) {
                 return [
-                    'allowed' => false,
-                    'reason' => 'Your subscription is no longer active (status: ' . $sub->status . ').',
+                    'allowed' => true,
+                    'reason' => '',
+                    'grace_period' => true,
+                    'ends_at' => $sub->ends_at,
                 ];
             }
 
+            return ['allowed' => true, 'reason' => ''];
+        }
+
+        if ($sub->status !== 'active' && $sub->status !== 'cancelled') {
             return [
                 'allowed' => false,
-                'reason' => 'Your subscription is no longer active or has expired.',
+                'reason' => 'Your subscription is no longer active (status: '.$sub->status.').',
             ];
         }
 
-        return ['allowed' => false, 'reason' => 'No active subscription found for your account.'];
+        return [
+            'allowed' => false,
+            'reason' => 'Your subscription is no longer active or has expired.',
+        ];
+    }
+
+    /**
+     * Cancel a subscription. The user retains access until the current
+     * ends_at. If no ends_at is set, it defaults to one month from now.
+     *
+     * Returns ['allowed' => bool, 'message' => string, 'ends_at' => ?Carbon].
+     */
+    public static function cancelSubscription(Tenant $tenant, ?Subscription $subscription = null, ?int $requestedByUserId = null): array
+    {
+        $subscription ??= (new self)->getActiveSubscription($tenant);
+
+        if (! $subscription) {
+            $subscription = Subscription::query()
+                ->where('tenant_id', $tenant->id)
+                ->latest('starts_at')
+                ->first();
+        }
+
+        if (! $subscription) {
+            return [
+                'allowed' => false,
+                'message' => 'No subscription found to cancel.',
+            ];
+        }
+
+        if ($subscription->status === 'cancelled') {
+            return [
+                'allowed' => true,
+                'message' => 'Subscription is already cancelled. You can continue using the system until '.optional($subscription->ends_at)->format('F j, Y').'.',
+                'ends_at' => $subscription->ends_at,
+            ];
+        }
+
+        if ($subscription->status !== 'active') {
+            return [
+                'allowed' => false,
+                'message' => 'Only active subscriptions can be cancelled. Current status: '.$subscription->status.'.',
+            ];
+        }
+
+        $endsAt = $subscription->ends_at;
+        if (! $endsAt) {
+            $endsAt = now()->addMonth();
+        }
+
+        $subscription->status = 'cancelled';
+        $subscription->ends_at = $endsAt;
+        $subscription->cancellation_date = now();
+        if ($requestedByUserId) {
+            $subscription->cancellation_requested_by = $requestedByUserId;
+        }
+        $subscription->save();
+
+        Log::info('Subscription cancelled', [
+            'tenant_id' => $tenant->id,
+            'subscription_id' => $subscription->id,
+            'ends_at' => $endsAt->toIso8601String(),
+        ]);
+
+        return [
+            'allowed' => true,
+            'message' => 'Your subscription has been cancelled. You can continue using the system until '.$endsAt->format('F j, Y').'.',
+            'ends_at' => $endsAt,
+        ];
+    }
+
+    /**
+     * Reactivate a previously cancelled subscription if it's still within
+     * the grace period.
+     */
+    public static function reactivateSubscription(Tenant $tenant, ?Subscription $subscription = null): array
+    {
+        $subscription ??= Subscription::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('status', 'cancelled')
+            ->latest('starts_at')
+            ->first();
+
+        if (! $subscription) {
+            return [
+                'allowed' => false,
+                'message' => 'No cancelled subscription found to reactivate.',
+            ];
+        }
+
+        if ($subscription->ends_at && now()->gt($subscription->ends_at)) {
+            return [
+                'allowed' => false,
+                'message' => 'The cancellation grace period has already ended.',
+            ];
+        }
+
+        $subscription->status = 'active';
+        $subscription->cancellation_date = null;
+        $subscription->cancellation_requested_by = null;
+        $subscription->save();
+
+        return [
+            'allowed' => true,
+            'message' => 'Your subscription has been reactivated.',
+        ];
     }
 
     private function createEvent(Tenant $tenant): array
@@ -83,11 +195,11 @@ class SubscriptionService
         $count = Event::query()->count();
 
         if ($count >= $limit) {
-            Log::warning('Tenant ID: ' . $tenant->id . ' reached the max events limit (' . $limit . ').');
+            Log::warning('Tenant ID: '.$tenant->id.' reached the max events limit ('.$limit.').');
 
             return [
                 'allowed' => false,
-                'reason' => 'You have reached the maximum number of events (' . $limit . ') allowed by your plan.',
+                'reason' => 'You have reached the maximum number of events ('.$limit.') allowed by your plan.',
             ];
         }
 
@@ -111,7 +223,7 @@ class SubscriptionService
         $total = $this->registrationsTotal($tenant);
 
         if ($total >= $limit) {
-            Log::warning('Tenant ID: ' . $tenant->id . ' reached the max registrations limit (' . $limit . '). Total registered: ' . $total);
+            Log::warning('Tenant ID: '.$tenant->id.' reached the max registrations limit ('.$limit.'). Total registered: '.$total);
 
             return [
                 'allowed' => false,
@@ -151,7 +263,7 @@ class SubscriptionService
             ->first();
 
         if (! $this->subscription) {
-            Log::warning('No active subscription found for tenant ID: ' . $tenant->id);
+            Log::warning('No active subscription found for tenant ID: '.$tenant->id);
         }
 
         return $this->subscription;
@@ -183,7 +295,7 @@ class SubscriptionService
         }
 
         $value = $sub->limitation('max_registrations', 0);
-        Log::debug('max_registrations: ' . $value);
+        Log::debug('max_registrations: '.$value);
         if (is_null($value)) {
             return null;
         }

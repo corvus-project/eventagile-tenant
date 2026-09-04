@@ -17,6 +17,10 @@ class EnsureTenantHasActiveSubscription
      * site access is blocked except for auth/password/impersonate flows and
      * the subscription-expired landing page.
      *
+     * Cancelled-but-not-yet-expired subscriptions remain accessible
+     * (grace period) until ends_at, after which they fall into the same
+     * block path as fully expired subscriptions.
+     *
      * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
@@ -34,6 +38,11 @@ class EnsureTenantHasActiveSubscription
         $result = SubscriptionService::canWithReason($tenant, 'access-site');
 
         if ($result['allowed']) {
+            if (! empty($result['grace_period'])) {
+                $request->attributes->set('subscription_grace_period', true);
+                $request->attributes->set('subscription_ends_at', $result['ends_at'] ?? null);
+            }
+
             return $next($request);
         }
 

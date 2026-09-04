@@ -4,11 +4,11 @@ namespace App\Models;
 
 use App\Services\SubscriptionService;
 use Illuminate\Support\Facades\Log;
-use Stancl\Tenancy\Database\Models\Tenant as BaseTenant;
 use Stancl\Tenancy\Contracts\TenantWithDatabase;
 use Stancl\Tenancy\Database\Concerns\HasDatabase;
 use Stancl\Tenancy\Database\Concerns\HasDomains;
 use Stancl\Tenancy\Database\Models\Domain;
+use Stancl\Tenancy\Database\Models\Tenant as BaseTenant;
 
 class Tenant extends BaseTenant implements TenantWithDatabase
 {
@@ -45,7 +45,7 @@ class Tenant extends BaseTenant implements TenantWithDatabase
     {
         return $this->hasOne(Subscription::class)
             ->ofMany('starts_at', 'max')
-            ->where('status', 'active')
+            ->whereIn('status', ['active', 'cancelled', 'canceled'])
             ->where(function ($q) {
                 $q->whereNull('ends_at')->orWhere('ends_at', '>=', now());
             })
@@ -60,13 +60,15 @@ class Tenant extends BaseTenant implements TenantWithDatabase
             $adminUsers = User::whereHas('roles', function ($query) {
                 $query->where('slug', 'admin');
             })->get();
+
             return $adminUsers;
         });
     }
 
     public function able(string $action)
     {
-        Log::info('Checking ability for user ID: ' . $this->id . ' and action: ' . $action);
+        Log::info('Checking ability for user ID: '.$this->id.' and action: '.$action);
+
         return app(SubscriptionService::class)->can($this, $action);
     }
 
