@@ -111,7 +111,7 @@ class SubscriptionService
         $total = $this->registrationsTotal($tenant);
 
         if ($total >= $limit) {
-            Log::warning('Tenant ID: ' . $tenant->id . ' reached the max registrations limit (' . $limit . ').');
+            Log::warning('Tenant ID: ' . $tenant->id . ' reached the max registrations limit (' . $limit . '). Total registered: ' . $total);
 
             return [
                 'allowed' => false,
@@ -183,7 +183,7 @@ class SubscriptionService
         }
 
         $value = $sub->limitation('max_registrations', 0);
-
+        Log::debug('Value: ' . $value);
         if (is_null($value)) {
             return null;
         }

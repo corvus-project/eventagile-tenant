@@ -17,6 +17,7 @@ new #[Layout('layouts.ea-yoga')]  class extends Component
 
     public Event $event;
     public ?string $name;
+    public ?string $email;
     public ?string $captchaToken = null;
     public EventRegistrationForm $form;
 
@@ -192,15 +193,25 @@ new #[Layout('layouts.ea-yoga')]  class extends Component
                         @endif
 
                         <form onsubmit="handleSubmit(event)" class="mt-1 space-y-2">
-                            <input label="Name" wire:model="form.name" readonly />
-                            <input label="Email" wire:model="form.email" value="{{ $this->user->email ?? '' }}" readonly />
+                            <label for="email" class="block text-sm font-medium leading-5 text-gray-700 dark:text-gray-300">
+                                Name
+                            </label>
+
+                            <input wire:model="form.name" readonly autofocus class="appearance-none flex w-full h-10 px-3 py-2 text-sm bg-white dark:text-gray-300 dark:bg-white/[4%] border rounded-md border-gray-300 dark:border-white/10 ring-offset-background placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-gray-300 dark:focus:border-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200/60 dark:focus:ring-white/20 disabled:cursor-not-allowed disabled:opacity-50 " />
+
+                            <label for="email" class="block text-sm font-medium leading-5 text-gray-700 dark:text-gray-300">
+                                Email address
+                            </label>
+
+                            <input wire:model="form.email" value="{{ $this->user->email ?? '' }}" readonly autofocus class="appearance-none flex w-full h-10 px-3 py-2 text-sm bg-white dark:text-gray-300 dark:bg-white/[4%] border rounded-md border-gray-300 dark:border-white/10 ring-offset-background placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-gray-300 dark:focus:border-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200/60 dark:focus:ring-white/20 disabled:cursor-not-allowed disabled:opacity-50 " />
 
                             @if(!$event->is_public)
                             <input label="Registration Code" wire:model="form.registration_code" placeholder="Enter registration code" />
                             @endif
 
-
-                            <button label="Register" rounded="md" class="btn-primary" type="primary" submit="true" />
+                            <button class="bg-blue-600 text-white hover:bg-blue-600/90 focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-900 focus:bg-blue-700/90 focus:ring-blue-700 px-5 py-3  text-sm font-medium rounded-md" type="submit">
+                                Register
+                            </button>
                         </form>
 
                         @endif

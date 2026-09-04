@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Log;
 use Stancl\Tenancy\Database\Concerns\CentralConnection;
 
 class Subscription extends Model
@@ -121,8 +122,8 @@ class Subscription extends Model
      */
     public function limitation(string $key, int|float|string|null $default = null): mixed
     {
-        $value = $this->plan_limitations[$key] ?? $default;
-
+        $planLimitations = $this->getPlanLimitations();
+        $value = $planLimitations[$key] ?? $default;
         if (is_numeric($value) && (int) $value === -1) {
             return null;
         }
@@ -132,6 +133,11 @@ class Subscription extends Model
         }
 
         return $value;
+    }
+
+    private function getPlanLimitations(): ?array
+    {
+        return is_array($this->plan_limitations) ? $this->plan_limitations : json_decode($this->plan_limitations, true);
     }
 
     public function isUnlimited(string $key): bool
