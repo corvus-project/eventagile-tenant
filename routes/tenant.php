@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-use Stancl\Tenancy\Features\UserImpersonation;
 use App\Http\Controllers\Auth\TenantEmailVerificationController;
 use App\Http\Controllers\Auth\TenantLogoutController;
 use Illuminate\Support\Facades\Route;
+use Stancl\Tenancy\Features\UserImpersonation;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomainOrSubdomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
@@ -59,13 +59,13 @@ Route::middleware([
         Route::livewire('/dashboard/profile/edit', 'pages::dashboard.profile.edit')->name('profile.edit');
         Route::livewire('/dashboard/reports', 'pages::dashboard.reports')->name('reports.index');
         Route::livewire('/dashboard/settings', 'pages::dashboard.settings')->name('settings.index');
+        Route::livewire('/dashboard/subscription', 'pages::dashboard.subscription')->name('dashboard.subscription');
     });
 
     Route::livewire('/auth/login', 'pages::auth.login')->name('login');
     Route::livewire('/auth/register', 'pages::auth.register')->name('register');
     Route::livewire('/auth/forget-password', 'pages::auth.password.reset')->name('password.request');
     Route::livewire('/auth/forget-reset/{token}', 'pages::auth.password.[token]')->name('password.reset');
-
 
     Route::middleware('auth')->group(function () {
 

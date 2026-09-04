@@ -37,13 +37,26 @@ it('reports an active subscription with a past end as inactive', function () {
         ->and($sub->isExpired())->toBeTrue();
 });
 
-it('reports a cancelled subscription as inactive even within the window', function () {
+it('allows access to a cancelled subscription that is still within the grace window', function () {
     $sub = new Subscription;
-    $sub->status = 'canceled';
+    $sub->status = 'cancelled';
     $sub->starts_at = now()->subDay();
     $sub->ends_at = now()->addDays(5);
 
-    expect($sub->isActive())->toBeFalse();
+    expect($sub->isActive())->toBeTrue()
+        ->and($sub->isCancelled())->toBeTrue()
+        ->and($sub->isInGracePeriod())->toBeTrue();
+});
+
+it('blocks access to a cancelled subscription that has passed the grace window', function () {
+    $sub = new Subscription;
+    $sub->status = 'cancelled';
+    $sub->starts_at = now()->subDays(10);
+    $sub->ends_at = now()->subDay();
+
+    expect($sub->isActive())->toBeFalse()
+        ->and($sub->isCancelled())->toBeTrue()
+        ->and($sub->isInGracePeriod())->toBeFalse();
 });
 
 it('treats a null end date as active for active status', function () {
@@ -196,4 +209,210 @@ it('denies event creation when there is no active subscription', function () {
     $result = SubscriptionService::canWithReason($tenant, 'create-event');
 
     expect($result['allowed'])->toBeFalse();
+});
+
+it('cancels an active subscription and keeps access until ends_at', function () {
+    $plan = Plan::query()->firstOrCreate(
+        ['slug' => 'free-plan-cancel'],
+        [
+            'name' => 'Free',
+            'price' => 0,
+            'currency' => 'gbp',
+            'interval' => 'month',
+            'interval_count' => 1,
+            'limitations' => ['max_events' => 3, 'max_registrations' => 50, 'sending_emails' => false],
+        ]
+    );
+
+    Tenant::query()->insert([
+        'id' => 'tenant-cancel',
+        'user_id' => null,
+        'name' => 'Cancel Tenant',
+        'email' => 'cancel@example.com',
+        'is_active' => true,
+        'data' => null,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $sub = Subscription::create([
+        'tenant_id' => 'tenant-cancel',
+        'plan_id' => $plan->id,
+        'plan_name' => 'Free',
+        'status' => 'active',
+        'starts_at' => now()->subDay(),
+        'ends_at' => now()->addDays(15),
+        'plan_limitations' => ['max_events' => 3, 'max_registrations' => 50, 'sending_emails' => false],
+    ]);
+
+    $result = SubscriptionService::cancelSubscription(Tenant::make(['id' => 'tenant-cancel']));
+
+    expect($result['allowed'])->toBeTrue()
+        ->and($result['message'])->toContain('cancelled')
+        ->and($sub->fresh()->status)->toBe('cancelled')
+        ->and($sub->fresh()->isInGracePeriod())->toBeTrue()
+        ->and($sub->fresh()->isActive())->toBeTrue();
+});
+
+it('still allows site access during the cancellation grace period', function () {
+    $plan = Plan::query()->firstOrCreate(
+        ['slug' => 'free-plan-grace'],
+        [
+            'name' => 'Free',
+            'price' => 0,
+            'currency' => 'gbp',
+            'interval' => 'month',
+            'interval_count' => 1,
+            'limitations' => ['max_events' => 3, 'max_registrations' => 50, 'sending_emails' => false],
+        ]
+    );
+
+    Tenant::query()->insert([
+        'id' => 'tenant-grace',
+        'user_id' => null,
+        'name' => 'Grace Tenant',
+        'email' => 'grace@example.com',
+        'is_active' => true,
+        'data' => null,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    Subscription::create([
+        'tenant_id' => 'tenant-grace',
+        'plan_id' => $plan->id,
+        'plan_name' => 'Free',
+        'status' => 'cancelled',
+        'starts_at' => now()->subDay(),
+        'ends_at' => now()->addDays(10),
+        'cancellation_date' => now(),
+        'plan_limitations' => ['max_events' => 3, 'max_registrations' => 50, 'sending_emails' => false],
+    ]);
+
+    $result = SubscriptionService::canWithReason(Tenant::make(['id' => 'tenant-grace']), 'access-site');
+
+    expect($result['allowed'])->toBeTrue()
+        ->and($result['grace_period'] ?? false)->toBeTrue();
+});
+
+it('denies site access when the cancellation grace period has ended', function () {
+    $plan = Plan::query()->firstOrCreate(
+        ['slug' => 'free-plan-grace-ended'],
+        [
+            'name' => 'Free',
+            'price' => 0,
+            'currency' => 'gbp',
+            'interval' => 'month',
+            'interval_count' => 1,
+            'limitations' => ['max_events' => 3, 'max_registrations' => 50, 'sending_emails' => false],
+        ]
+    );
+
+    Tenant::query()->insert([
+        'id' => 'tenant-grace-ended',
+        'user_id' => null,
+        'name' => 'Grace Ended',
+        'email' => 'grace-ended@example.com',
+        'is_active' => true,
+        'data' => null,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    Subscription::create([
+        'tenant_id' => 'tenant-grace-ended',
+        'plan_id' => $plan->id,
+        'plan_name' => 'Free',
+        'status' => 'cancelled',
+        'starts_at' => now()->subDays(20),
+        'ends_at' => now()->subDay(),
+        'cancellation_date' => now()->subDays(5),
+        'plan_limitations' => ['max_events' => 3, 'max_registrations' => 50, 'sending_emails' => false],
+    ]);
+
+    $result = SubscriptionService::canWithReason(Tenant::make(['id' => 'tenant-grace-ended']), 'access-site');
+
+    expect($result['allowed'])->toBeFalse();
+});
+
+it('reactivates a cancelled subscription within the grace period', function () {
+    $plan = Plan::query()->firstOrCreate(
+        ['slug' => 'free-plan-reactivate'],
+        [
+            'name' => 'Free',
+            'price' => 0,
+            'currency' => 'gbp',
+            'interval' => 'month',
+            'interval_count' => 1,
+            'limitations' => ['max_events' => 3, 'max_registrations' => 50, 'sending_emails' => false],
+        ]
+    );
+
+    Tenant::query()->insert([
+        'id' => 'tenant-reactivate',
+        'user_id' => null,
+        'name' => 'Reactivate Tenant',
+        'email' => 'reactivate@example.com',
+        'is_active' => true,
+        'data' => null,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $sub = Subscription::create([
+        'tenant_id' => 'tenant-reactivate',
+        'plan_id' => $plan->id,
+        'plan_name' => 'Free',
+        'status' => 'cancelled',
+        'starts_at' => now()->subDay(),
+        'ends_at' => now()->addDays(10),
+        'cancellation_date' => now(),
+        'plan_limitations' => ['max_events' => 3, 'max_registrations' => 50, 'sending_emails' => false],
+    ]);
+
+    $result = SubscriptionService::reactivateSubscription(Tenant::make(['id' => 'tenant-reactivate']));
+
+    expect($result['allowed'])->toBeTrue()
+        ->and($sub->fresh()->status)->toBe('active')
+        ->and($sub->fresh()->cancellation_date)->toBeNull();
+});
+
+it('does not cancel an already cancelled subscription twice', function () {
+    $plan = Plan::query()->firstOrCreate(
+        ['slug' => 'free-plan-double-cancel'],
+        [
+            'name' => 'Free',
+            'price' => 0,
+            'currency' => 'gbp',
+            'interval' => 'month',
+            'interval_count' => 1,
+            'limitations' => ['max_events' => 3, 'max_registrations' => 50, 'sending_emails' => false],
+        ]
+    );
+
+    Tenant::query()->insert([
+        'id' => 'tenant-double-cancel',
+        'user_id' => null,
+        'name' => 'Double Cancel',
+        'email' => 'double-cancel@example.com',
+        'is_active' => true,
+        'data' => null,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    Subscription::create([
+        'tenant_id' => 'tenant-double-cancel',
+        'plan_id' => $plan->id,
+        'plan_name' => 'Free',
+        'status' => 'cancelled',
+        'starts_at' => now()->subDay(),
+        'ends_at' => now()->addDays(5),
+        'plan_limitations' => ['max_events' => 3, 'max_registrations' => 50, 'sending_emails' => false],
+    ]);
+
+    $result = SubscriptionService::cancelSubscription(Tenant::make(['id' => 'tenant-double-cancel']));
+
+    expect($result['allowed'])->toBeTrue()
+        ->and($result['message'])->toContain('already cancelled');
 });

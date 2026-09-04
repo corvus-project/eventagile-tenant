@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Log;
 use Stancl\Tenancy\Database\Concerns\CentralConnection;
 
 class Subscription extends Model
@@ -66,12 +65,13 @@ class Subscription extends Model
     ];
 
     /**
-     * A subscription is considered active when its status is "active"
-     * and the current time is within its [starts_at, ends_at] window.
+     * A subscription is considered active when its status is "active" or
+     * "cancelled" (in grace period) and the current time is within its
+     * [starts_at, ends_at] window.
      */
     public function isActive(): bool
     {
-        if ($this->status !== 'active') {
+        if (! $this->isAccessibleStatus()) {
             return false;
         }
 
@@ -93,9 +93,28 @@ class Subscription extends Model
         return ! $this->isActive();
     }
 
+    public function isCancelled(): bool
+    {
+        return in_array($this->status, ['cancelled', 'canceled'], true);
+    }
+
+    /**
+     * A subscription is in its grace period if it has been cancelled
+     * but the user still has access until the ends_at date.
+     */
+    public function isInGracePeriod(): bool
+    {
+        return $this->isCancelled() && $this->ends_at && now()->lt($this->ends_at);
+    }
+
+    protected function isAccessibleStatus(): bool
+    {
+        return in_array($this->status, ['active', 'cancelled', 'canceled'], true);
+    }
+
     public function scopeActive($query)
     {
-        return $query->where('status', 'active')
+        return $query->whereIn('status', ['active', 'cancelled', 'canceled'])
             ->where(function ($q) {
                 $q->whereNull('ends_at')
                     ->orWhere('ends_at', '>=', now());
