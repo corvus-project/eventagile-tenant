@@ -55,12 +55,13 @@ class AccountSetup extends Command
         }
     }
 
-    private function remove_tenant(int $user_id)
+    private function remove_tenant(int $user_id): void
     {
         $tenant = Tenant::where('user_id',  $user_id)->first();
-
+if ( $tenant){
         $tenant->domains()->delete();
         $tenant->delete();
+}
     }
 
     private function create_tenant(ModelsAccountSetup $account): ?Tenant
