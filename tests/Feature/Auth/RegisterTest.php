@@ -19,7 +19,7 @@ test('is redirected if already logged in', function () {
     $this->be($user);
 
     $this->get('auth/register')
-        ->assertRedirect(route('home'));
+        ->assertRedirect(route('tenant.home'));
 });
 
 test('a user can register', function () {

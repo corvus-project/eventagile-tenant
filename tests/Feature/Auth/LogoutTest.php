@@ -10,7 +10,7 @@ test('an authenticated user can log out', function () {
     $this->be($user);
 
     $this->post(route('logout'))
-        ->assertRedirect(route('home'));
+        ->assertRedirect(route('tenant.home'));
 
     expect(Auth::check())->toBeFalse();
 });

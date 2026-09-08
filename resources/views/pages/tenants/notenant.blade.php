@@ -9,7 +9,11 @@ use Livewire\Attributes\Layout;
 new #[Layout('layouts.empty')]  class extends Component
 {
 
-    public function mount() {}
+    public function mount()
+    {
+
+        dd(tenant());
+    }
 }
 ?>
 <x-slot name="title">
