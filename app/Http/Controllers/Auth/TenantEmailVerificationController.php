@@ -21,7 +21,7 @@ class TenantEmailVerificationController extends Controller
         }
 
         if (Auth::user()->hasVerifiedEmail()) {
-            return redirect()->route('home');
+            return redirect()->route('tenant.home');
         }
 
         if (Auth::user()->markEmailAsVerified()) {

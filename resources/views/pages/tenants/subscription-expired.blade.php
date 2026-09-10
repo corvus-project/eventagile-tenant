@@ -11,7 +11,6 @@ new #[Layout('layouts.ea-yoga')]  class extends Component
         if (! $tenant) {
             return true;
         }
-
         return ! \App\Services\SubscriptionService::can($tenant, 'access-site');
     }
 };

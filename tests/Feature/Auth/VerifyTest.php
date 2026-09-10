@@ -44,7 +44,7 @@ test('can verify', function () {
     ]);
 
     $this->get($url)
-        ->assertRedirect(route('home'));
+        ->assertRedirect(route('tenant.home'));
 
     expect($user->hasVerifiedEmail())->toBeTrue();
 });
