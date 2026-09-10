@@ -40,7 +40,7 @@ class EventForm extends Form
     public bool $is_public = false;
 
     #[Validate('required')]
-    public $status;
+    public string $status;
 
     public function setEvent(Event $event): void
     {

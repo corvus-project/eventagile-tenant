@@ -62,8 +62,6 @@ enum EventStatus: string
             ];
         });
 
-        $return->prepend(['id' => '', 'name' => 'Select Status'], -1);
-
         return $return;
     }
 
@@ -74,17 +72,15 @@ enum EventStatus: string
         $filtered = array_filter(self::cases(), function ($case) {
             return in_array($case, [self::DRAFT, self::PENDING, self::SCHEDULED]);
         });
-        
+
         $return = collect($filtered)->map(function ($case) {
-            
-                return [
-                    'id' => $case->name,
-                    'name' => $case->value,
-                ];
-            
+
+            return [
+                'id' => $case->name,
+                'name' => $case->value,
+            ];
         });
 
-        $return->prepend(['id' => '', 'name' => 'Select Status'], -1);
 
         return $return;
     }
