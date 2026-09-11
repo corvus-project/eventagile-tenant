@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Stancl\Tenancy\Database\Concerns\CentralConnection;
 
 class Subscription extends Model
@@ -68,6 +70,11 @@ class Subscription extends Model
      * A subscription is considered active when its status is "active" or
      * "cancelled" (in grace period) and the current time is within its
      * [starts_at, ends_at] window.
+     *
+     * A subscription whose ends_at has just passed (within the
+     * renewal_grace_hours window) is also considered active so that
+     * tenants are not locked out between the expiry time and the
+     * next renewal cron run.
      */
     public function isActive(): bool
     {
@@ -82,7 +89,12 @@ class Subscription extends Model
         }
 
         if ($this->ends_at && $now->gt($this->ends_at)) {
-            return false;
+            // Allow a renewal grace window so tenants aren't locked out
+            // between expiry and the next cron run.
+            $graceHours = (int) config('tenancy.subscription.renewal_grace_hours', 24);
+            if ($now->gt($this->ends_at->copy()->addHours($graceHours))) {
+                return false;
+            }
         }
 
         return true;
@@ -114,10 +126,13 @@ class Subscription extends Model
 
     public function scopeActive($query)
     {
+        $graceHours = (int) config('tenancy.subscription.renewal_grace_hours', 24);
+        $graceEnd = now()->copy()->subHours($graceHours);
+
         return $query->whereIn('status', ['active', 'cancelled', 'canceled'])
-            ->where(function ($q) {
+            ->where(function ($q) use ($graceEnd) {
                 $q->whereNull('ends_at')
-                    ->orWhere('ends_at', '>=', now());
+                    ->orWhere('ends_at', '>=', $graceEnd);
             })
             ->where(function ($q) {
                 $q->whereNull('starts_at')
@@ -162,5 +177,52 @@ class Subscription extends Model
     public function isUnlimited(string $key): bool
     {
         return is_null($this->limitation($key));
+    }
+
+    public function renew(): bool
+    {
+        return DB::transaction(function () {
+            $subscription = static::query()
+                ->whereKey($this->id)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $subscription || $subscription->status !== 'active') {
+                return false;
+            }
+
+            if (! $subscription->ends_at || $subscription->ends_at->gt(now())) {
+                return false;
+            }
+
+            $renewed = $subscription->replicate();
+            $renewed->starts_at = $subscription->ends_at;
+            $renewed->ends_at = $subscription->calculateNextEndsAt();
+            $renewed->status = 'active';
+            $renewed->renewal_status = null;
+            $renewed->renewal_date = null;
+            $renewed->save();
+
+            $subscription->status = 'expired';
+            $subscription->renewal_status = 'completed';
+            $subscription->renewal_date = now()->format('Y-m-d H:i:s');
+            $subscription->save();
+
+            return true;
+        });
+    }
+
+    private function calculateNextEndsAt(): Carbon
+    {
+        $start = $this->ends_at->copy();
+        $count = max(1, (int) $this->interval_count);
+
+        return match ($this->interval) {
+            'day' => $start->addDays($count),
+            'week' => $start->addWeeks($count),
+            'month' => $start->addMonths($count),
+            'year' => $start->addYears($count),
+            default => $start->addMonth(),
+        };
     }
 }
