@@ -4,6 +4,7 @@ use App\Enums\PlanInterval;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\Tenant;
+use App\Services\SubscriptionService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -130,4 +131,88 @@ it('renews all due subscriptions via the command and reports the count', functio
 
     expect(Subscription::where('status', 'expired')->count())->toBe(2)
         ->and(Subscription::where('status', 'active')->count())->toBe(2);
+});
+
+it('allows site access during the renewal grace window after ends_at', function () {
+    config()->set('tenancy.subscription.renewal_grace_hours', 48);
+
+    [$tenant, $plan] = createTenantAndPlan();
+    createSubscription($tenant, $plan, [
+        'ends_at' => Carbon::parse('2025-12-31 23:59:59'),
+    ]);
+
+    Carbon::setTestNow(Carbon::parse('2026-01-01 01:00:00'));
+
+    $result = SubscriptionService::canWithReason(Tenant::make(['id' => $tenant->id]), 'access-site');
+
+    expect($result['allowed'])->toBeTrue();
+});
+
+it('denies site access after the renewal grace window has passed', function () {
+    config()->set('tenancy.subscription.renewal_grace_hours', 24);
+
+    [$tenant, $plan] = createTenantAndPlan();
+    createSubscription($tenant, $plan, [
+        'ends_at' => Carbon::parse('2025-12-31 23:59:59'),
+    ]);
+
+    Carbon::setTestNow(Carbon::parse('2026-01-02 02:00:00'));
+
+    $result = SubscriptionService::canWithReason(Tenant::make(['id' => $tenant->id]), 'access-site');
+
+    expect($result['allowed'])->toBeFalse();
+});
+
+it('renewal does not apply to cancelled subscriptions', function () {
+    [$tenant, $plan] = createTenantAndPlan();
+    createSubscription($tenant, $plan, [
+        'status' => 'cancelled',
+    ]);
+
+    $subscription = Subscription::first();
+
+    expect($subscription->renew())->toBeFalse()
+        ->and(Subscription::count())->toBe(1);
+});
+
+it('renewal preserves plan limitations and features on the new subscription', function () {
+    [$tenant, $plan] = createTenantAndPlan();
+    $subscription = createSubscription($tenant, $plan);
+
+    $subscription->renew();
+
+    $renewed = Subscription::query()
+        ->where('tenant_id', $tenant->id)
+        ->where('status', 'active')
+        ->first();
+
+    expect($renewed->plan_limitations)->toBeArray()
+        ->and($renewed->plan_limitations)->toEqual(['max_events' => 100])
+        ->and($renewed->plan_features)->toEqual(['Access to all features'])
+        ->and($renewed->plan_name)->toBe('Monthly Plan')
+        ->and($renewed->plan_id)->toBe($plan->id);
+});
+
+it('renewal skips subscriptions that have not yet ended', function () {
+    [$tenant, $plan] = createTenantAndPlan();
+    createSubscription($tenant, $plan, [
+        'ends_at' => Carbon::parse('2026-02-15 23:59:59'),
+    ]);
+
+    $this->artisan('renew-subscription')
+        ->expectsOutput('Renewed 0 subscription(s).')
+        ->assertSuccessful();
+
+    expect(Subscription::count())->toBe(1);
+});
+
+it('renewal reports failures when a subscription cannot be renewed', function () {
+    [$tenant, $plan] = createTenantAndPlan();
+    createSubscription($tenant, $plan, [
+        'status' => 'cancelled',
+    ]);
+
+    $this->artisan('renew-subscription')
+        ->expectsOutput('Renewed 0 subscription(s).')
+        ->assertSuccessful();
 });

@@ -32,14 +32,21 @@ class RenewSubscription extends Command
             ->get();
 
         $renewed = 0;
+        $failed = 0;
         foreach ($subscriptions as $subscription) {
-            echo "Renewing subscription ID: {$subscription->id} for tenant ID: {$subscription->tenant_id}\n";
+            $this->line("Renewing subscription ID: {$subscription->id} for tenant ID: {$subscription->tenant_id}");
             if ($subscription->renew()) {
                 $renewed++;
+            } else {
+                $failed++;
+                $this->warn("  Failed to renew subscription ID: {$subscription->id}");
             }
         }
 
         $this->info("Renewed {$renewed} subscription(s).");
+        if ($failed > 0) {
+            $this->warn("{$failed} subscription(s) could not be renewed.");
+        }
 
         return self::SUCCESS;
     }

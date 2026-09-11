@@ -43,7 +43,7 @@ class SubscriptionService
     {
         $sub = Subscription::query()
             ->where('tenant_id', $tenant->id)
-            ->where('status', 'active')
+            ->active()
             ->latest('starts_at')
             ->first();
 
@@ -64,10 +64,10 @@ class SubscriptionService
             return ['allowed' => true, 'reason' => ''];
         }
 
-        if ($sub->status !== 'active' && $sub->status !== 'cancelled') {
+        if ($sub->status !== 'active' && $sub->status !== 'cancelled' && $sub->status !== 'canceled') {
             return [
                 'allowed' => false,
-                'reason' => 'Your subscription is no longer active (status: ' . $sub->status . ').',
+                'reason' => 'Your subscription is no longer active (status: '.$sub->status.').',
             ];
         }
 
@@ -104,7 +104,7 @@ class SubscriptionService
         if ($subscription->status === 'cancelled') {
             return [
                 'allowed' => true,
-                'message' => 'Subscription is already cancelled. You can continue using the system until ' . optional($subscription->ends_at)->format('F j, Y') . '.',
+                'message' => 'Subscription is already cancelled. You can continue using the system until '.optional($subscription->ends_at)->format('F j, Y').'.',
                 'ends_at' => $subscription->ends_at,
             ];
         }
@@ -112,7 +112,7 @@ class SubscriptionService
         if ($subscription->status !== 'active') {
             return [
                 'allowed' => false,
-                'message' => 'Only active subscriptions can be cancelled. Current status: ' . $subscription->status . '.',
+                'message' => 'Only active subscriptions can be cancelled. Current status: '.$subscription->status.'.',
             ];
         }
 
@@ -137,7 +137,7 @@ class SubscriptionService
 
         return [
             'allowed' => true,
-            'message' => 'Your subscription has been cancelled. You can continue using the system until ' . $endsAt->format('F j, Y') . '.',
+            'message' => 'Your subscription has been cancelled. You can continue using the system until '.$endsAt->format('F j, Y').'.',
             'ends_at' => $endsAt,
         ];
     }
@@ -196,11 +196,11 @@ class SubscriptionService
         $count = Event::query()->count();
 
         if ($count >= $limit) {
-            Log::warning('Tenant ID: ' . $tenant->id . ' reached the max events limit (' . $limit . ').');
+            Log::warning('Tenant ID: '.$tenant->id.' reached the max events limit ('.$limit.').');
 
             return [
                 'allowed' => false,
-                'reason' => 'You have reached the maximum number of events (' . $limit . ') allowed by your plan.',
+                'reason' => 'You have reached the maximum number of events ('.$limit.') allowed by your plan.',
             ];
         }
 
@@ -224,7 +224,7 @@ class SubscriptionService
         $total = $this->registrationsTotal($tenant);
 
         if ($total >= $limit) {
-            Log::warning('Tenant ID: ' . $tenant->id . ' reached the max registrations limit (' . $limit . '). Total registered: ' . $total);
+            Log::warning('Tenant ID: '.$tenant->id.' reached the max registrations limit ('.$limit.'). Total registered: '.$total);
 
             return [
                 'allowed' => false,
@@ -264,7 +264,7 @@ class SubscriptionService
             ->first();
 
         if (! $this->subscription) {
-            Log::warning('No active subscription found for tenant ID: ' . $tenant->id);
+            Log::warning('No active subscription found for tenant ID: '.$tenant->id);
         }
 
         return $this->subscription;
@@ -296,7 +296,7 @@ class SubscriptionService
         }
 
         $value = $sub->limitation('max_registrations', 0);
-        Log::debug('max_registrations: ' . $value);
+        Log::debug('max_registrations: '.$value);
         if (is_null($value)) {
             return null;
         }
