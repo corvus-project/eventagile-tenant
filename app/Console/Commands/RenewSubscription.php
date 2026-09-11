@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Subscription;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class RenewSubscription extends Command
 {
@@ -30,7 +31,7 @@ class RenewSubscription extends Command
             ->where('status', 'active')
             ->where('ends_at', '<=', now())
             ->get();
-
+        Log::info("Found {$subscriptions->count()} subscription(s) to renew.");
         $renewed = 0;
         $failed = 0;
         foreach ($subscriptions as $subscription) {
@@ -47,6 +48,8 @@ class RenewSubscription extends Command
         if ($failed > 0) {
             $this->warn("{$failed} subscription(s) could not be renewed.");
         }
+
+        Log::info("Renewed {$renewed} subscription(s).");
 
         return self::SUCCESS;
     }
