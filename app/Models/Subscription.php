@@ -163,4 +163,51 @@ class Subscription extends Model
     {
         return is_null($this->limitation($key));
     }
+
+    public function renew(): bool
+    {
+        return DB::transaction(function () {
+            $subscription = static::query()
+                ->whereKey($this->id)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $subscription || $subscription->status !== 'active') {
+                return false;
+            }
+
+            if (! $subscription->ends_at || $subscription->ends_at->gt(now())) {
+                return false;
+            }
+
+            $renewed = $subscription->replicate();
+            $renewed->starts_at = $subscription->ends_at;
+            $renewed->ends_at = $subscription->calculateNextEndsAt();
+            $renewed->status = 'active';
+            $renewed->renewal_status = null;
+            $renewed->renewal_date = null;
+            $renewed->save();
+
+            $subscription->status = 'expired';
+            $subscription->renewal_status = 'completed';
+            $subscription->renewal_date = now()->format('Y-m-d H:i:s');
+            $subscription->save();
+
+            return true;
+        });
+    }
+
+    private function calculateNextEndsAt(): Carbon
+    {
+        $start = $this->ends_at->copy();
+        $count = max(1, (int) $this->interval_count);
+
+        return match ($this->interval) {
+            'day' => $start->addDays($count),
+            'week' => $start->addWeeks($count),
+            'month' => $start->addMonths($count),
+            'year' => $start->addYears($count),
+            default => $start->addMonth(),
+        };
+    }
 }
