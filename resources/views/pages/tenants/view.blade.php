@@ -99,40 +99,32 @@ new #[Layout('layouts.ea-yoga')]  class extends Component
 
 <x-slot name="event_hero">
     <!-- Event Hero Section -->
-    <section class="gradient-bg text-white py-16">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid md:grid-cols-2 gap-12 items-center">
+    <section class="gradient-bg text-white py-10 sm:py-16">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
                 <div>
                     <span
-                        class="inline-block bg-white text-primary px-4 py-1 rounded-full text-sm font-semibold mb-4"></span>
-                    <h1 id="eventTitle" class="text-4xl md:text-5xl font-bold mb-4">{{ $event->title ?? '' }}</h1>
-                    <p id="eventDescription" class="text-xl mb-6 text-green-50">{{ $event->description ?? '' }}</p>
+                        class="inline-block bg-white text-primary px-3 py-1 rounded-full text-xs sm:text-sm font-semibold mb-3 sm:mb-4"></span>
+                    <h1 id="eventTitle" class="text-2xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4">{{ $event->title ?? '' }}</h1>
+                    <p id="eventDescription" class="text-base sm:text-xl mb-4 sm:mb-6 text-green-50">{{ $event->description ?? '' }}</p>
 
-                    <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="grid grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
                         <div class="flex items-center">
-
-                            <x-heroicon-s-calendar class="text-white mr-2 size-5" />
-                            <span>{{ $event->start_time->format('F j, Y H:i') ?? '' }}</span>
-
-                        </div>
-
-                        <div class="flex items-center">
-
-                            <x-heroicon-o-map-pin class="text-white mr-2 size-5" />
-                            <span>Location: {{ $event->location ?? '' }}</span>
-
+                            <x-heroicon-s-calendar class="text-white mr-1.5 sm:mr-2 size-4 sm:size-5" />
+                            <span class="text-xs sm:text-sm">{{ $event->start_time->format('F j, Y H:i') ?? '' }}</span>
                         </div>
                         <div class="flex items-center">
-                            <x-heroicon-o-users class="text-white mr-2 size-5 " />
-
-                            <span> Capacity: {{ $event->capacity ?? '' }}</span>
+                            <x-heroicon-o-map-pin class="text-white mr-1.5 sm:mr-2 size-4 sm:size-5" />
+                            <span class="text-xs sm:text-sm truncate">Location: {{ $event->location ?? '' }}</span>
                         </div>
-
                         <div class="flex items-center">
-                            <x-heroicon-o-envelope class="text-white mr-2 size-5" /> <span> Organizer: {{ $event->organizer ?? '' }}</span>
+                            <x-heroicon-o-users class="text-white mr-1.5 sm:mr-2 size-4 sm:size-5" />
+                            <span class="text-xs sm:text-sm">Capacity: {{ $event->capacity ?? '' }}</span>
+                        </div>
+                        <div class="flex items-center">
+                            <x-heroicon-o-envelope class="text-white mr-1.5 sm:mr-2 size-4 sm:size-5" /> <span class="text-xs sm:text-sm truncate">Organizer: {{ $event->organizer ?? '' }}</span>
                         </div>
                     </div>
-
                 </div>
                 <div class="hidden md:block">
                     <img id="eventImage"
@@ -140,30 +132,27 @@ new #[Layout('layouts.ea-yoga')]  class extends Component
                         alt="Yoga Class" class="rounded-2xl shadow-2xl">
                 </div>
             </div>
-
         </div>
-
     </section>
-
 </x-slot>
 
 
 <div>
 
-
     <!-- Event Details & Booking -->
-    <section class="py-3">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid md:grid-cols-3 gap-2">
+    <section class="py-6 sm:py-8">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
 
                 <!-- Left Column: Event Details -->
-                <div class="md:col-span-2 space-y-8">
+                <div class="md:col-span-2 space-y-4 sm:space-y-6">
 
                     <!-- About This Class -->
-                    <div class="bg-white rounded-xl shadow-md p-6">
+                    <div class="bg-white rounded-xl shadow-md p-4 sm:p-6">
 
-                        <p id="registration_deadline"><span class="font-bold">Registration Deadline:</span> <br>
-                            Please register until {{ $event->registration_deadline ? $event->registration_deadline->format('F j, Y H:i') : 'N/A' }}.
+                        <p id="registration_deadline" class="text-sm sm:text-base">
+                            <span class="font-bold">Registration Deadline:</span>
+                            {{ $event->registration_deadline ? $event->registration_deadline->format('F j, Y H:i') : 'N/A' }}.
                         </p>
 
                         {{$event->full_description}}
@@ -173,47 +162,51 @@ new #[Layout('layouts.ea-yoga')]  class extends Component
 
                 <!-- Right Column: Booking Form -->
                 <div class="md:col-span-1">
-                    <div class="bg-white rounded-xl shadow-md p-6 sticky top-24">
-                        <div class="mb-6">
-                            <h3 class="text-2xl font-bold text-gray-900 mb-2">Book this Class</h3>
-                            <p class="text-gray-600">Reserve your spot today</p>
+                    <div class="bg-white rounded-xl shadow-md p-4 sm:p-6 md:sticky md:top-24">
+                        <div class="mb-4 sm:mb-6">
+                            <h3 class="text-xl sm:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">Book this Class</h3>
+                            <p class="text-gray-600 text-sm sm:text-base">Reserve your spot today</p>
                         </div>
 
                         @if ($this->form->getErrorBag()->any())
-                        <div class="alert alert-danger mb-4">
+                        <div class="alert alert-danger mb-3 sm:mb-4">
                             {{ $this->form->getErrorBag()->first() }}
                         </div>
                         @endif
                         @if ($errorMessage)
-                        <div class="alert alert-warning mb-4">
+                        <div class="alert alert-warning mb-3 sm:mb-4">
                             {{$errorMessage}}
                         </div>
                         @endif
                         @if($showForm)
                         @if (session('register-status'))
-                        <div class="alert alert-warning mb-4">
+                        <div class="alert alert-warning mb-3 sm:mb-4">
                             {{ session('register-status') }}
                         </div>
                         @endif
 
-                        <form onsubmit="handleSubmit(event)" class="mt-1 space-y-2">
-                            <label for="email" class="block text-sm font-medium leading-5 text-gray-700 dark:text-gray-300">
-                                Name
-                            </label>
+                        <form onsubmit="handleSubmit(event)" class="mt-2 sm:mt-3 space-y-3 sm:space-y-4">
+                            <div>
+                                <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
+                                <input wire:model="form.name" readonly autofocus
+                                    class="mt-1 appearance-none flex w-full h-10 px-3 py-2 text-sm bg-white dark:text-gray-300 dark:bg-white/[4%] border rounded-md border-gray-300 dark:border-white/10 ring-offset-background placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-gray-300 dark:focus:border-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200/60 dark:focus:ring-white/20 disabled:cursor-not-allowed disabled:opacity-50" />
+                            </div>
 
-                            <input wire:model="form.name" readonly autofocus class="appearance-none flex w-full h-10 px-3 py-2 text-sm bg-white dark:text-gray-300 dark:bg-white/[4%] border rounded-md border-gray-300 dark:border-white/10 ring-offset-background placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-gray-300 dark:focus:border-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200/60 dark:focus:ring-white/20 disabled:cursor-not-allowed disabled:opacity-50 " />
-
-                            <label for="email" class="block text-sm font-medium leading-5 text-gray-700 dark:text-gray-300">
-                                Email address
-                            </label>
-
-                            <input wire:model="form.email" value="{{ $this->user->email ?? '' }}" readonly autofocus class="appearance-none flex w-full h-10 px-3 py-2 text-sm bg-white dark:text-gray-300 dark:bg-white/[4%] border rounded-md border-gray-300 dark:border-white/10 ring-offset-background placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-gray-300 dark:focus:border-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200/60 dark:focus:ring-white/20 disabled:cursor-not-allowed disabled:opacity-50 " />
+                            <div>
+                                <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email address</label>
+                                <input wire:model="form.email" value="{{ $this->user->email ?? '' }}" readonly autofocus
+                                    class="mt-1 appearance-none flex w-full h-10 px-3 py-2 text-sm bg-white dark:text-gray-300 dark:bg-white/[4%] border rounded-md border-gray-300 dark:border-white/10 ring-offset-background placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-gray-300 dark:focus:border-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200/60 dark:focus:ring-white/20 disabled:cursor-not-allowed disabled:opacity-50" />
+                            </div>
 
                             @if(!$event->is_public)
-                            <input label="Registration Code" wire:model="form.registration_code" placeholder="Enter registration code" />
+                            <div>
+                                <label for="registration_code" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Registration Code</label>
+                                <input wire:model="form.registration_code" placeholder="Enter registration code"
+                                    class="mt-1 appearance-none flex w-full h-10 px-3 py-2 text-sm bg-white dark:text-gray-300 dark:bg-white/[4%] border rounded-md border-gray-300 dark:border-white/10 ring-offset-background placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-gray-300 dark:focus:border-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200/60 dark:focus:ring-white/20 disabled:cursor-not-allowed disabled:opacity-50" />
+                            </div>
                             @endif
 
-                            <button class="bg-blue-600 text-white hover:bg-blue-600/90 focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-900 focus:bg-blue-700/90 focus:ring-blue-700 px-5 py-3  text-sm font-medium rounded-md" type="submit">
+                            <button class="w-full sm:w-auto bg-blue-600 text-white hover:bg-blue-600/90 focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-900 focus:bg-blue-700/90 focus:ring-blue-700 px-5 py-2.5 sm:py-3 text-sm font-medium rounded-md" type="submit">
                                 Register
                             </button>
                         </form>
@@ -235,6 +228,9 @@ new #[Layout('layouts.ea-yoga')]  class extends Component
                         </script>
 
                     </div>
+                </div>
+            </div>
+        </div>
     </section>
 
 </div>
