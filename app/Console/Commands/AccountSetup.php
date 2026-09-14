@@ -12,6 +12,7 @@ use App\Services\PaymentService;
 use App\Services\SubscriptionService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
+use Stancl\Tenancy\Database\Models\Domain;
 
 class AccountSetup extends Command
 {
@@ -21,8 +22,6 @@ class AccountSetup extends Command
     public function handle(): int
     {
         $accounts = ModelsAccountSetup::whereIn('action', ['SETUP', 'RESETUP'])->get();
-        $payment = app(PaymentService::class);
-        $subscriptionService = app(SubscriptionService::class);
 
         Log::debug('Account setup command started. Number of accounts to process: ' . $accounts->count());
         foreach ($accounts as $account) {
@@ -37,10 +36,6 @@ class AccountSetup extends Command
 
             $tenant = $this->create_tenant($account);
             if ($tenant) {
-                if ($account->action === 'SETUP') {
-                    $this->processPaymentForSetup($tenant, $account, $payment, $subscriptionService);
-                }
-
                 event(new OnboardTenant($tenant));
                 $account->action = 'FINISHED';
                 $account->save();

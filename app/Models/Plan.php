@@ -74,7 +74,7 @@ class Plan extends Model
         }
 
         if (is_null($value)) {
-            return null;
+            return [];
         }
 
         return json_decode($value, true);
