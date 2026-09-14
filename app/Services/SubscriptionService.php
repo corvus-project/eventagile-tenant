@@ -4,10 +4,13 @@ namespace App\Services;
 
 use App\Models\Event;
 use App\Models\EventRegistration;
+use App\Models\PaymentTransaction;
 use App\Models\Subscription;
 use App\Models\Tenant;
+use App\Models\Plan;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use App\Services\PaymentService;
 
 class SubscriptionService
 {
@@ -61,6 +64,15 @@ class SubscriptionService
                 ];
             }
 
+            if ($sub->trial_ends_at && now()->lt($sub->trial_ends_at)) {
+                return [
+                    'allowed' => true,
+                    'reason' => '',
+                    'trial' => true,
+                    'trial_ends_at' => $sub->trial_ends_at,
+                ];
+            }
+
             return ['allowed' => true, 'reason' => ''];
         }
 
@@ -75,6 +87,75 @@ class SubscriptionService
             'allowed' => false,
             'reason' => 'Your subscription is no longer active or has expired.',
         ];
+    }
+
+    private function isInTrial(Subscription $sub): bool
+    {
+        return $sub->trial_ends_at && now()->lt($sub->trial_ends_at);
+    }
+
+    public function createSubscriptionForTenant(Tenant $tenant, Plan $plan, PaymentService $payment): array
+    {
+        $trialDays = (int) config('payment.trial_days', 15);
+        $trialEndsAt = now()->addDays($trialDays);
+
+        if ($plan->price > 0) {
+            $paymentResult = $payment->charge(
+                $tenant->id . '-' . $tenant->name,
+                $plan->price,
+                $plan->currency ?? 'usd',
+                ['tenant_id' => $tenant->id, 'plan_id' => $plan->id, 'trial' => true]
+            );
+
+            if (! $paymentResult['success']) {
+                return [
+                    'success' => false,
+                    'error' => $paymentResult['message'] ?? 'Payment failed.',
+                ];
+            }
+        }
+
+        $subscription = Subscription::create([
+            'tenant_id' => $tenant->id,
+            'stripe_customer_id' => 'customer_' . $tenant->id,
+            'stripe_subscription_id' => null,
+            'stripe_price_id' => $plan->stripe_price_id ?? null,
+            'starts_at' => now(),
+            'ends_at' => $trialEndsAt,
+            'trial_ends_at' => $trialEndsAt,
+            'status' => 'active',
+            'currency' => $plan->currency ?? 'usd',
+            'amount' => $plan->price,
+            'interval' => $plan->interval,
+            'interval_count' => $plan->interval_count,
+            'plan_name' => $plan->name,
+            'plan_description' => $plan->description,
+            'plan_id' => $plan->id,
+            'plan_features' => $plan->features,
+            'plan_limitations' => $plan->limitations,
+            'payment_gateway' => config('payment.default'),
+            'payment_method' => 'trial',
+            'last_payment_date' => $plan->price > 0 ? now() : null,
+            'last_payment_status' => $plan->price > 0 ? 'succeeded' : null,
+            'next_billing_date' => $trialEndsAt,
+            'metadata' => ['trial_days' => $trialDays],
+        ]);
+
+        if ($plan->price > 0) {
+            PaymentTransaction::create([
+                'tenant_id' => $tenant->id,
+                'subscription_id' => $subscription->id,
+                'transaction_id' => $paymentResult['transaction_id'] ?? null,
+                'type' => 'charge',
+                'amount' => $plan->price,
+                'currency' => $plan->currency ?? 'usd',
+                'status' => 'succeeded',
+                'gateway' => config('payment.default'),
+                'metadata' => $paymentResult['metadata'] ?? [],
+            ]);
+        }
+
+        return ['success' => true, 'subscription' => $subscription];
     }
 
     /**
