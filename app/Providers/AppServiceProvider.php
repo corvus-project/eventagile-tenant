@@ -23,7 +23,13 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Register any application services.
      */
-    public function register(): void {}
+    public function register(): void
+    {
+        $gateway = config('payment.gateways.' . config('payment.default'));
+        if ($gateway) {
+            $this->app->bind(\App\Services\PaymentService::class, $gateway);
+        }
+    }
 
     /**
      * Bootstrap any application services.

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Stancl\Tenancy\Database\Concerns\CentralConnection;
+use App\Services\PaymentService;
 
 class Subscription extends Model
 {
@@ -78,6 +79,10 @@ class Subscription extends Model
      */
     public function isActive(): bool
     {
+        if ($this->trial_ends_at && now()->lt($this->trial_ends_at)) {
+            return true;
+        }
+
         if (! $this->isAccessibleStatus()) {
             return false;
         }
@@ -89,8 +94,6 @@ class Subscription extends Model
         }
 
         if ($this->ends_at && $now->gt($this->ends_at)) {
-            // Allow a renewal grace window so tenants aren't locked out
-            // between expiry and the next cron run.
             $graceHours = (int) config('tenancy.subscription.renewal_grace_hours', 24);
             if ($now->gt($this->ends_at->copy()->addHours($graceHours))) {
                 return false;
@@ -148,6 +151,11 @@ class Subscription extends Model
     public function plan()
     {
         return $this->belongsTo(Plan::class);
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(PaymentTransaction::class);
     }
 
     /**
@@ -209,6 +217,68 @@ class Subscription extends Model
             $subscription->save();
 
             return true;
+        });
+    }
+
+    public function renewWithPayment(PaymentService $payment): bool
+    {
+        return DB::transaction(function () use ($payment) {
+            $paymentResult = $payment->charge(
+                $this->stripe_customer_id,
+                $this->amount,
+                $this->currency,
+                ['subscription_id' => $this->id, 'tenant_id' => $this->tenant_id]
+            );
+
+            if (! $paymentResult['success']) {
+                $this->last_payment_status = 'failed';
+                $this->save();
+
+                PaymentTransaction::create([
+                    'tenant_id' => $this->tenant_id,
+                    'subscription_id' => $this->id,
+                    'transaction_id' => null,
+                    'type' => 'renewal',
+                    'amount' => $this->amount,
+                    'currency' => $this->currency,
+                    'status' => $paymentResult['retryable'] ? 'retrying' : 'failed',
+                    'gateway' => 'fake',
+                    'failure_code' => $paymentResult['code'] ?? 'payment_declined',
+                    'failure_message' => $paymentResult['message'] ?? 'Payment failed',
+                    'retry_count' => 0,
+                    'next_retry_at' => $paymentResult['retryable'] && isset($paymentResult['retry_after'])
+                        ? now()->addSeconds($paymentResult['retry_after'])
+                        : null,
+                ]);
+
+                if ($paymentResult['retryable']) {
+                    $this->renewal_status = 'pending';
+                } else {
+                    $this->renewal_status = 'payment_failed';
+                }
+                $this->save();
+
+                return false;
+            }
+
+            $this->last_payment_date = now();
+            $this->last_payment_status = 'succeeded';
+            $this->payment_gateway = 'fake';
+            $this->save();
+
+            PaymentTransaction::create([
+                'tenant_id' => $this->tenant_id,
+                'subscription_id' => $this->id,
+                'transaction_id' => $paymentResult['transaction_id'],
+                'type' => 'renewal',
+                'amount' => $this->amount,
+                'currency' => $this->currency,
+                'status' => 'succeeded',
+                'gateway' => 'fake',
+                'metadata' => $paymentResult['metadata'] ?? [],
+            ]);
+
+            return $this->renew();
         });
     }
 

@@ -4,44 +4,34 @@ namespace App\Console\Commands;
 
 use App\Events\OnboardTenant;
 use App\Models\AccountSetup as ModelsAccountSetup;
+use App\Models\Plan;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\Helper;
+use App\Services\PaymentService;
+use App\Services\SubscriptionService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
+use Stancl\Tenancy\Database\Models\Domain;
 
 class AccountSetup extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'account-setup';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
     protected $description = 'Command description';
 
-    /**
-     * Execute the console command.
-     */
-    public function handle()
+    public function handle(): int
     {
         $accounts = ModelsAccountSetup::whereIn('action', ['SETUP', 'RESETUP'])->get();
 
         Log::debug('Account setup command started. Number of accounts to process: ' . $accounts->count());
         foreach ($accounts as $account) {
-
             Log::debug('Account setup: ' . $account->user_id);
             $this->info('Account setup: ' . $account->user_id);
+
             if ($account->action === 'RESETUP') {
                 $this->remove_tenant($account->user_id);
-                Log::debug('Tenant information is removed: ' . $account->useer_id);
-                $this->info('Tenant information is removed: ' . $account->useer_id);
+                Log::debug('Tenant information is removed: ' . $account->user_id);
+                $this->info('Tenant information is removed: ' . $account->user_id);
             }
 
             $tenant = $this->create_tenant($account);
@@ -53,15 +43,51 @@ class AccountSetup extends Command
                 Log::debug('Tenant setup finished: ' . $tenant->id);
             }
         }
+
+        return self::SUCCESS;
+    }
+
+    private function processPaymentForSetup(Tenant $tenant, ModelsAccountSetup $account, PaymentService $payment, SubscriptionService $subscriptionService): void
+    {
+        $planId = $account->config['plan_id'] ?? null;
+        $plan = $planId ? Plan::find($planId) : Plan::query()->where('is_active', true)->first();
+
+        if (! $plan) {
+            Log::warning('No plan found for account setup, creating trial subscription without payment.');
+            return;
+        }
+
+        $result = $subscriptionService->createSubscriptionForTenant($tenant, $plan, $payment);
+
+        if (! $result['success']) {
+            Log::warning('Payment failed for account setup: ' . $result['error']);
+            $account->error_message = $result['error'];
+            $account->save();
+
+            if ($this->isRetryableFailure($result['error'])) {
+                Log::info('Payment failure is retryable, will retry on next run.');
+            }
+        }
+    }
+
+    private function isRetryableFailure(string $error): bool
+    {
+        $retryableMessages = ['gateway timeout', 'unavailable', 'maintenance', 'temporary'];
+        foreach ($retryableMessages as $msg) {
+            if (stripos($error, $msg) !== false) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private function remove_tenant(int $user_id): void
     {
         $tenant = Tenant::where('user_id',  $user_id)->first();
-if ( $tenant){
-        $tenant->domains()->delete();
-        $tenant->delete();
-}
+        if ($tenant) {
+            $tenant->domains()->delete();
+            $tenant->delete();
+        }
     }
 
     private function create_tenant(ModelsAccountSetup $account): ?Tenant

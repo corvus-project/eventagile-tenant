@@ -4,10 +4,13 @@ namespace App\Services;
 
 use App\Models\Event;
 use App\Models\EventRegistration;
+use App\Models\PaymentTransaction;
 use App\Models\Subscription;
 use App\Models\Tenant;
+use App\Models\Plan;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use App\Services\PaymentService;
 
 class SubscriptionService
 {
@@ -61,13 +64,22 @@ class SubscriptionService
                 ];
             }
 
+            if ($sub->trial_ends_at && now()->lt($sub->trial_ends_at)) {
+                return [
+                    'allowed' => true,
+                    'reason' => '',
+                    'trial' => true,
+                    'trial_ends_at' => $sub->trial_ends_at,
+                ];
+            }
+
             return ['allowed' => true, 'reason' => ''];
         }
 
         if ($sub->status !== 'active' && $sub->status !== 'cancelled' && $sub->status !== 'canceled') {
             return [
                 'allowed' => false,
-                'reason' => 'Your subscription is no longer active (status: '.$sub->status.').',
+                'reason' => 'Your subscription is no longer active (status: ' . $sub->status . ').',
             ];
         }
 
@@ -75,6 +87,75 @@ class SubscriptionService
             'allowed' => false,
             'reason' => 'Your subscription is no longer active or has expired.',
         ];
+    }
+
+    private function isInTrial(Subscription $sub): bool
+    {
+        return $sub->trial_ends_at && now()->lt($sub->trial_ends_at);
+    }
+
+    public function createSubscriptionForTenant(Tenant $tenant, Plan $plan, PaymentService $payment): array
+    {
+        $trialDays = (int) config('payment.trial_days', 15);
+        $trialEndsAt = now()->addDays($trialDays);
+
+        if ($plan->price > 0) {
+            $paymentResult = $payment->charge(
+                $tenant->id . '-' . $tenant->name,
+                $plan->price,
+                $plan->currency ?? 'usd',
+                ['tenant_id' => $tenant->id, 'plan_id' => $plan->id, 'trial' => true]
+            );
+
+            if (! $paymentResult['success']) {
+                return [
+                    'success' => false,
+                    'error' => $paymentResult['message'] ?? 'Payment failed.',
+                ];
+            }
+        }
+
+        $subscription = Subscription::create([
+            'tenant_id' => $tenant->id,
+            'stripe_customer_id' => 'customer_' . $tenant->id,
+            'stripe_subscription_id' => null,
+            'stripe_price_id' => $plan->stripe_price_id ?? null,
+            'starts_at' => now(),
+            'ends_at' => $trialEndsAt,
+            'trial_ends_at' => $trialEndsAt,
+            'status' => 'active',
+            'currency' => $plan->currency ?? 'usd',
+            'amount' => $plan->price,
+            'interval' => $plan->interval,
+            'interval_count' => $plan->interval_count,
+            'plan_name' => $plan->name,
+            'plan_description' => $plan->description,
+            'plan_id' => $plan->id,
+            'plan_features' => $plan->features,
+            'plan_limitations' => $plan->limitations,
+            'payment_gateway' => config('payment.default'),
+            'payment_method' => 'trial',
+            'last_payment_date' => $plan->price > 0 ? now() : null,
+            'last_payment_status' => $plan->price > 0 ? 'succeeded' : null,
+            'next_billing_date' => $trialEndsAt,
+
+        ]);
+
+        if ($plan->price > 0) {
+            PaymentTransaction::create([
+                'tenant_id' => $tenant->id,
+                'subscription_id' => $subscription->id,
+                'transaction_id' => $paymentResult['transaction_id'] ?? null,
+                'type' => 'charge',
+                'amount' => $plan->price,
+                'currency' => $plan->currency ?? 'usd',
+                'status' => 'succeeded',
+                'gateway' => config('payment.default'),
+                'metadata' => $paymentResult['metadata'] ?? [],
+            ]);
+        }
+
+        return ['success' => true, 'subscription' => $subscription];
     }
 
     /**
@@ -104,7 +185,7 @@ class SubscriptionService
         if ($subscription->status === 'cancelled') {
             return [
                 'allowed' => true,
-                'message' => 'Subscription is already cancelled. You can continue using the system until '.optional($subscription->ends_at)->format('F j, Y').'.',
+                'message' => 'Subscription is already cancelled. You can continue using the system until ' . optional($subscription->ends_at)->format('F j, Y') . '.',
                 'ends_at' => $subscription->ends_at,
             ];
         }
@@ -112,7 +193,7 @@ class SubscriptionService
         if ($subscription->status !== 'active') {
             return [
                 'allowed' => false,
-                'message' => 'Only active subscriptions can be cancelled. Current status: '.$subscription->status.'.',
+                'message' => 'Only active subscriptions can be cancelled. Current status: ' . $subscription->status . '.',
             ];
         }
 
@@ -137,7 +218,7 @@ class SubscriptionService
 
         return [
             'allowed' => true,
-            'message' => 'Your subscription has been cancelled. You can continue using the system until '.$endsAt->format('F j, Y').'.',
+            'message' => 'Your subscription has been cancelled. You can continue using the system until ' . $endsAt->format('F j, Y') . '.',
             'ends_at' => $endsAt,
         ];
     }
@@ -196,11 +277,11 @@ class SubscriptionService
         $count = Event::query()->count();
 
         if ($count >= $limit) {
-            Log::warning('Tenant ID: '.$tenant->id.' reached the max events limit ('.$limit.').');
+            Log::warning('Tenant ID: ' . $tenant->id . ' reached the max events limit (' . $limit . ').');
 
             return [
                 'allowed' => false,
-                'reason' => 'You have reached the maximum number of events ('.$limit.') allowed by your plan.',
+                'reason' => 'You have reached the maximum number of events (' . $limit . ') allowed by your plan.',
             ];
         }
 
@@ -224,7 +305,7 @@ class SubscriptionService
         $total = $this->registrationsTotal($tenant);
 
         if ($total >= $limit) {
-            Log::warning('Tenant ID: '.$tenant->id.' reached the max registrations limit ('.$limit.'). Total registered: '.$total);
+            Log::warning('Tenant ID: ' . $tenant->id . ' reached the max registrations limit (' . $limit . '). Total registered: ' . $total);
 
             return [
                 'allowed' => false,
@@ -264,7 +345,7 @@ class SubscriptionService
             ->first();
 
         if (! $this->subscription) {
-            Log::warning('No active subscription found for tenant ID: '.$tenant->id);
+            Log::warning('No active subscription found for tenant ID: ' . $tenant->id);
         }
 
         return $this->subscription;
@@ -296,7 +377,7 @@ class SubscriptionService
         }
 
         $value = $sub->limitation('max_registrations', 0);
-        Log::debug('max_registrations: '.$value);
+        Log::debug('max_registrations: ' . $value);
         if (is_null($value)) {
             return null;
         }

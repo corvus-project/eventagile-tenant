@@ -6,7 +6,6 @@ use App\Models\Plan;
 use App\Models\Setting;
 use App\Models\Tenant;
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
 class OnBoardingService
@@ -20,9 +19,13 @@ class OnBoardingService
                 'email' => $tenantData['admin_email'],
                 'password' => $tenantData['admin_password'],
             ]);
+
+            $subscriptionService = app(SubscriptionService::class);
+            $payment = app(PaymentService::class);
+            $plan = Plan::where('slug', 'free-plan')->first();
+            $result = $subscriptionService->createSubscriptionForTenant($tenant, $plan, $payment);
             $this->createSettingsTable();
         });
-        $this->createSubscriptions($tenant);
     }
 
     private function createAdminUser(Tenant $tenant, array $adminData)
@@ -62,23 +65,6 @@ class OnBoardingService
                 }
             }
         });
-    }
-
-    private function createSubscriptions(Tenant $tenant)
-    {
-        // Create default subscription for the tenant
-        $plan = Plan::where('slug', 'free-plan')->first();
-        $tenant->subscriptions()->create([
-            'starts_at' => now(),
-            'ends_at' => Carbon::now()->addYear(),
-            'status' => 'active',
-            'plan_id' => $plan->id,
-            'interval' => $plan->interval,
-            'plan_limitations' => $plan->limitations,
-            'plan_features' => $plan->features,
-            'plan_name' => $plan->name,
-            'plan_description' => $plan->description,
-        ]);
     }
 
     private function createSettingsTable()
