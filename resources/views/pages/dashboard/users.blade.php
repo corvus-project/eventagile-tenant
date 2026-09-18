@@ -18,7 +18,14 @@ new #[Layout('layouts.admin')] class extends Component {
     public int $perPage = 10;
 
     public string $search = '';
-    public array $sortBy = ['column' => 'start_time', 'direction' => 'desc'];
+    public array $sortBy = ['column' => 'name', 'direction' => 'desc'];
+
+    private const SORTABLE_COLUMNS = ['name', 'email'];
+
+    public function mount(): void
+    {
+        FacadesGate::authorize('viewAny', User::class);
+    }
 
     #[Computed()]
     public function users()
@@ -46,6 +53,10 @@ new #[Layout('layouts.admin')] class extends Component {
 
     public function sortByColumn(string $column): void
     {
+        if (! in_array($column, self::SORTABLE_COLUMNS, true)) {
+            return;
+        }
+
         if ($this->sortBy['column'] === $column) {
             $this->sortBy['direction'] = $this->sortBy['direction'] === 'asc' ? 'desc' : 'asc';
         } else {
@@ -57,22 +68,22 @@ new #[Layout('layouts.admin')] class extends Component {
 
     public function delete(int $id)
     {
-        FacadesGate::authorize('delete-user', User::findOrFail($id));
-        $product = User::findOrFail($id);
-        $product->delete();
+        $user = User::findOrFail($id);
+
+        FacadesGate::authorize('delete-user', $user);
+
+        $user->delete();
         $this->toast('success', 'User deleted successfully');
     }
 
     public function edit(int $id)
     {
-        $slug = User::findOrFail($id);
-        return redirect()->route('users.update', ['user' => $slug]);
+        return redirect()->route('dashboard.users');
     }
 
     public function show(int $id)
     {
-        $slug = User::findOrFail($id);
-        return redirect()->route('users.show', ['user' => $slug]);
+        return redirect()->route('dashboard.users.registrations', ['user' => $id]);
     }
 };
 ?>

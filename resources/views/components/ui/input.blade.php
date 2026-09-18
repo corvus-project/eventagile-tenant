@@ -22,7 +22,7 @@
             @svg($icon, 'w-5 h-5')
         </div>
         @endif
-        <input {{ $attributes->whereStartsWith('wire:model') }} id="{{ $id ?? '' }}" name="{{ $name ?? '' }}" type="{{ $type ?? '' }}" placeholder="{{ $placeholder ?? '' }}" required autofocus class="appearance-none flex w-full h-10 px-3 py-2 text-sm bg-white dark:text-gray-300 dark:bg-white/[4%] border rounded-md border-gray-300 dark:border-white/10 ring-offset-background placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-blue-300 dark:focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200/60 dark:focus:ring-blue-800/40 disabled:cursor-not-allowed disabled:opacity-50 @if($icon) pl-10 @endif @error($wireModel) border-red-300 text-red-900 placeholder-red-300 focus:border-red-300 focus:ring-red @enderror" />
+        <input {{ $attributes->whereStartsWith('wire:model') }} id="{{ $id ?? '' }}" name="{{ $name ?? '' }}" type="{{ $type ?? '' }}" placeholder="{{ $placeholder ?? '' }}" required autofocus class="appearance-none flex w-full h-10 px-3 py-2 text-sm bg-white dark:text-gray-300 dark:bg-white/[4%] border rounded-md border-gray-300 dark:border-white/10 ring-offset-background placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-blue-300 dark:focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200/60 dark:focus:ring-blue-800/40 disabled:cursor-not-allowed disabled:opacity-50 @if($icon) pl-10 @endif @error($wireModel) border-red-300 text-red-900 placeholder-red-300 focus:border-red-300 focus:ring-red @enderror" aria-invalid="{{ $errors->has($wireModel) ? 'true' : 'false' }}" />
     </div>
 
     @error($wireModel)

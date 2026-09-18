@@ -2,6 +2,7 @@
 
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Illuminate\Support\Facades\Gate;
 
 new #[Layout('layouts.admin')] class extends  Component {
 
@@ -10,6 +11,8 @@ new #[Layout('layouts.admin')] class extends  Component {
     public function mount($event)
     {
         $this->event = \App\Models\Event::where('slug', $event)->firstOrFail();
+
+        Gate::authorize('view-event', $this->event);
     }
 };
 ?>
@@ -32,16 +35,16 @@ new #[Layout('layouts.admin')] class extends  Component {
         <div class="relative flex-1 w-full ">
             <div class="flex justify-end mb-4">
                 @can('view-event', $this->event)
-                <x-ui.text-link href="{{ route('events.registrations.show', ['event' => $this->event->slug]) }}" class="btn-ghost btn-sm text-red-600 p-2">
+                <x-ui.text-link href="{{ route('dashboard.events.registrations.show', ['event' => $this->event->slug]) }}" class="btn-ghost btn-sm text-red-600 p-2">
                     Registrations
                 </x-ui.text-link>
 
-                <x-ui.text-link href="{{ route('events.registrations.export', ['event' => $this->event->slug]) }}" class="btn-ghost btn-sm text-red-600 p-2">
+                <x-ui.text-link href="{{ route('dashboard.events.registrations.export', ['event' => $this->event->slug]) }}" class="btn-ghost btn-sm text-red-600 p-2">
                     Export Registration List
                 </x-ui.text-link>
                 @endcan
                 @can('update-event', $this->event)
-                <x-ui.text-link href="{{ route('events.update', ['event' => $this->event->slug]) }}" class="btn-ghost btn-sm text-red-600 p-2">
+                <x-ui.text-link href="{{ route('dashboard.events.update', ['event' => $this->event->slug]) }}" class="btn-ghost btn-sm text-red-600 p-2">
                     Update Event
                 </x-ui.text-link>
                 @endcan

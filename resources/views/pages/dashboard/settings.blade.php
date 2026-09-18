@@ -22,6 +22,8 @@ new #[Layout('layouts.admin')] class extends  Component {
 
     public function save()
     {
+        Gate::authorize('update-settings');
+
         $this->validate([
             'settings.*' => 'required|string|max:10080',
         ]);

@@ -27,12 +27,18 @@ new #[Layout('layouts.admin')] class extends Component {
     {
         $this->event = $event;
         Gate::authorize('view-event', $event);
-        $this->registration = $event->registrations()
-            ->orderBy('created_at', 'desc')->get();
     }
 
-    public function download(int $id, string $type)
+    public function download(string $type)
     {
+        Gate::authorize('view-event', $this->event);
+
+        if (! in_array($type, ['csv', 'excel'], true)) {
+            abort(422, 'Unsupported export format.');
+        }
+
+        $id = $this->event->getKey();
+
         if ($type === 'csv') {
             return (new RegistrationsExport($id))->download('registrations-' . $id . '.csv', \Maatwebsite\Excel\Excel::CSV);
         }
@@ -78,11 +84,11 @@ new #[Layout('layouts.admin')] class extends Component {
                             <p class="mb-4">Click the button below to download the registration list.</p>
 
                             <div class="flex items-center py-2 border-b">
-                                <a href="#" wire:click.prevent="download({{ $event->id }}, 'excel')" class="btn btn-info btn-sm m-2">
+                                <a href="#" wire:click.prevent="download('excel')" class="btn btn-info btn-sm m-2">
                                     Download Excel
                                 </a>
 
-                                <a href="#" wire:click.prevent="download({{ $event->id }}, 'csv')" class="btn btn-info btn-sm m-2">
+                                <a href="#" wire:click.prevent="download('csv')" class="btn btn-info btn-sm m-2">
                                     Download CSV
                                 </a>
                             </div>

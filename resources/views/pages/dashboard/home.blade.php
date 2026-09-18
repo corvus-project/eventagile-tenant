@@ -58,11 +58,11 @@ new #[Layout('layouts.admin')] class extends Component {
 
 
         $this->dashboardData = [
-            'dailyRegistrations' => $dailyRegistrations ?? ['dates' => [], 'counts' => []],
-            'eventStatus' => $eventStatus ?? ['labels' => [], 'values' => []],
-            'eventTimeline' => $eventTimeline ?? ['labels' => [], 'values' => []],
-            'registrationMetrics' => $registrationMetrics ?? ['labels' => [], 'values' => []],
-            'attendanceStatus' => $attendanceStatus ?? ['labels' => [], 'values' => []],
+            'dailyRegistrations' => $this->dailyRegistrations,
+            'eventStatus' => $this->eventStatus,
+            'eventTimeline' => $this->eventTimeline,
+            'registrationMetrics' => $this->registrationMetrics,
+            'attendanceStatus' => $this->attendanceStatus,
         ];
 
 
