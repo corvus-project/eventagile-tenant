@@ -16,12 +16,27 @@ new #[Layout('layouts.admin')] class extends Component {
     public int $perPage = 10;
     public  Event $event;
     public string $search = '';
-    public array $sortBy = ['column' => 'name', 'direction' => 'desc'];
+    public array $sortBy = ['column' => 'registered_at', 'direction' => 'desc'];
+
+    private const SORTABLE_COLUMNS = ['name', 'registered_at', 'status'];
 
     public function mount(Event $event)
     {
         Gate::authorize('view-event', $event);
         $this->event = $event;
+    }
+
+    public function sortByColumn(string $column): void
+    {
+        if (! in_array($column, self::SORTABLE_COLUMNS, true)) {
+            return;
+        }
+
+        $this->sortBy = $this->sortBy['column'] === $column
+            ? ['column' => $column, 'direction' => $this->sortBy['direction'] === 'asc' ? 'desc' : 'asc']
+            : ['column' => $column, 'direction' => 'asc'];
+
+        $this->resetPage();
     }
 
 
@@ -30,7 +45,7 @@ new #[Layout('layouts.admin')] class extends Component {
     {
         return EventRegistration::query()
             ->with('user') // Eager load the related user
-            ->where('event_id', $this->event->id)
+            ->whereBelongsTo($this->event)
             ->orderBy($this->sortBy['column'], $this->sortBy['direction'])
             ->paginate($this->perPage);
     }

@@ -41,6 +41,8 @@ new #[Layout('layouts.admin')]  class extends Component
 
     public function save()
     {
+        Gate::authorize('create-event');
+
         $this->form->store();
         return $this->redirect('/dashboard/events');
     }

@@ -6,6 +6,7 @@ use App\Enums\EventStatus;
 use App\Models\Event;
 use App\Models\Tenant;
 use App\Services\SubscriptionService;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Validate;
 use Livewire\Form;
@@ -60,6 +61,8 @@ class EventForm extends Form
 
     public function store(): void
     {
+        Gate::authorize('create-event');
+
         $this->validate();
 
         $tenant = tenant();
@@ -96,23 +99,29 @@ class EventForm extends Form
 
     public function save(): void
     {
-        $this->validate();
-        if ($this->event) {
-
-            $status = EventStatus::fromName($this->status) ?? EventStatus::DRAFT;
-
-            $this->event->update([
-                'title' => $this->title,
-                'description' => $this->description,
-                'full_description' => $this->full_description,
-                'start_time' => $this->start_time,
-                'registration_deadline' => $this->registration_deadline,
-                'location' => $this->location,
-                'organizer' => $this->organizer,
-                'capacity' => $this->capacity,
-                'is_public' => ($this->is_public) ? true : false,
-                'status' => $status->value,
+        if (! $this->event) {
+            throw ValidationException::withMessages([
+                'title' => 'Unable to resolve the event being updated.',
             ]);
         }
+
+        Gate::authorize('update-event', $this->event);
+
+        $this->validate();
+
+        $status = EventStatus::fromName($this->status) ?? EventStatus::DRAFT;
+
+        $this->event->update([
+            'title' => $this->title,
+            'description' => $this->description,
+            'full_description' => $this->full_description,
+            'start_time' => $this->start_time,
+            'registration_deadline' => $this->registration_deadline,
+            'location' => $this->location,
+            'organizer' => $this->organizer,
+            'capacity' => $this->capacity,
+            'is_public' => ($this->is_public) ? true : false,
+            'status' => $status->value,
+        ]);
     }
 }

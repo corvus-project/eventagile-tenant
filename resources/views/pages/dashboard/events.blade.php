@@ -6,6 +6,7 @@ use App\Models\Tenant;
 use App\Services\SubscriptionService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
@@ -18,6 +19,8 @@ new #[Layout('layouts.admin')]  class extends Component
     public int $perPage = 10;
     public string $search = '';
     public array $sortBy = ['column' => 'start_time', 'direction' => 'desc'];
+
+    private const SORTABLE_COLUMNS = ['title', 'start_time', 'organizer', 'status'];
 
     public function mount() {}
 
@@ -47,6 +50,10 @@ new #[Layout('layouts.admin')]  class extends Component
 
     public function sortByColumn(string $column): void
     {
+        if (! in_array($column, self::SORTABLE_COLUMNS, true)) {
+            return;
+        }
+
         if ($this->sortBy['column'] === $column) {
             $this->sortBy['direction'] = $this->sortBy['direction'] === 'asc' ? 'desc' : 'asc';
         } else {
@@ -58,8 +65,11 @@ new #[Layout('layouts.admin')]  class extends Component
 
     public function show(int $id)
     {
-        $slug = Event::findOrFail($id);
-        return redirect()->route('events.show', ['event' => $slug]);
+        $event = Event::findOrFail($id);
+
+        Gate::authorize('view-event', $event);
+
+        return redirect()->route('dashboard.events.show', ['event' => $event]);
     }
 
     public function cloneEvent(int $id)
@@ -74,6 +84,8 @@ new #[Layout('layouts.admin')]  class extends Component
         }
 
         $event = Event::findOrFail($id);
+
+        Gate::authorize('view-event', $event);
 
         $clonedEvent = $event->replicate();
         $clonedEvent->title = $event->title . ' (Copy)';
