@@ -30,6 +30,8 @@ new #[Layout('layouts.auth')] class extends Component
         $this->captchaToken = $token;
         Log::info('Starting authentication process for email: ' . $this->email);
 
+        $this->validate();
+
         $query = http_build_query([
             'secret' => config('services.recaptcha.secret_key'),
             'response' => $this->captchaToken,
@@ -43,8 +45,6 @@ new #[Layout('layouts.auth')] class extends Component
         ]));
 
         Log::info('Login attempt', ['email' => $this->email]);
-
-        $this->validate();
 
         if (!Auth::attempt(['email' => $this->email, 'password' => $this->password], $this->remember)) {
             Log::warning('Failed login attempt', ['email' => $this->email, 'ip' => request()->ip(), 'captcha_score' => $captchaLevel]);
@@ -90,14 +90,20 @@ new #[Layout('layouts.auth')] class extends Component
                     Email address
                 </label>
 
-                <input type="email" id="email" name="email" wire:model="email" required autofocus class="appearance-none flex w-full h-10 px-3 py-2 text-sm bg-white dark:text-gray-300 dark:bg-white/[4%] border rounded-md border-gray-300 dark:border-white/10 ring-offset-background placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-gray-300 dark:focus:border-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200/60 dark:focus:ring-white/20 disabled:cursor-not-allowed disabled:opacity-50 @error($email) border-red-300 text-red-900 placeholder-red-300 focus:border-red-300 focus:ring-red @enderror" />
+                <input type="email" id="email" name="email" wire:model="email" required autofocus class="appearance-none flex w-full h-10 px-3 py-2 text-sm bg-white dark:text-gray-300 dark:bg-white/[4%] border rounded-md border-gray-300 dark:border-white/10 ring-offset-background placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-gray-300 dark:focus:border-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200/60 dark:focus:ring-white/20 disabled:cursor-not-allowed disabled:opacity-50 @error('email') border-red-300 text-red-900 placeholder-red-300 focus:border-red-300 focus:ring-red @enderror" />
+                @error('email')
+                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                @enderror
 
 
                 <label for="password" class="block text-sm font-medium leading-5 text-gray-700 dark:text-gray-300">
                     Password
                 </label>
 
-                <input type="password" id="password" name="password" wire:model="password" required autofocus class="appearance-none flex w-full h-10 px-3 py-2 text-sm bg-white dark:text-gray-300 dark:bg-white/[4%] border rounded-md border-gray-300 dark:border-white/10 ring-offset-background placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-gray-300 dark:focus:border-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200/60 dark:focus:ring-white/20 disabled:cursor-not-allowed disabled:opacity-50 @error($password) border-red-300 text-red-900 placeholder-red-300 focus:border-red-300 focus:ring-red @enderror" />
+                <input type="password" id="password" name="password" wire:model="password" required autofocus class="appearance-none flex w-full h-10 px-3 py-2 text-sm bg-white dark:text-gray-300 dark:bg-white/[4%] border rounded-md border-gray-300 dark:border-white/10 ring-offset-background placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-gray-300 dark:focus:border-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200/60 dark:focus:ring-white/20 disabled:cursor-not-allowed disabled:opacity-50 @error('password') border-red-300 text-red-900 placeholder-red-300 focus:border-red-300 focus:ring-red @enderror" />
+                @error('password')
+                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                @enderror
 
                 <div class="flex items-center justify-between mt-6 text-sm leading-5">
                     <checkbox label="Remember me" id="remember" name="remember" wire:model="remember" />

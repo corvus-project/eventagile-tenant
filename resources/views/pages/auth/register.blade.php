@@ -32,6 +32,8 @@ new #[Layout('layouts.auth')] class extends Component
             $this->captchaToken = $token;
         }
 
+        $this->validate();
+
         $query = http_build_query([
             'secret' => config('services.recaptcha.secret_key'),
             'response' => $this->captchaToken,
@@ -43,7 +45,6 @@ new #[Layout('layouts.auth')] class extends Component
             'captchaToken' => __('Error on captcha verification. Please, refresh the page and try again.')
         ]));
 
-        $this->validate();
         $user = User::create([
             'email' => $this->email,
             'name' => $this->name,
@@ -84,6 +85,12 @@ new #[Layout('layouts.auth')] class extends Component
             @error('captchaToken')
             <div class="bg-red-300 text-red-700 p-3 rounded">{{ $message }}</div>
             @enderror
+
+            @if ($errors->hasAny(['name', 'email', 'password', 'passwordConfirmation']))
+            <div class="mb-4 bg-red-100 text-red-700 p-3 rounded" role="alert">
+                {{ __('Please correct the highlighted fields.') }}
+            </div>
+            @endif
 
             <form onsubmit="handleSubmit(event)" class="space-y-6">
                 <x-ui.input label="Name" type="text" id="name" name="name" wire:model="name" />
