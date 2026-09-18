@@ -2,11 +2,10 @@
 
 namespace App\Services;
 
+use App\Enums\EventStatus;
 use App\Models\Event;
-use App\Models\User;
 use App\Models\EventRegistration;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
+use App\Models\User;
 
 class DashboardService
 {
@@ -61,7 +60,7 @@ class DashboardService
         $values = [];
 
         $data->each(function ($item) use (&$labels, &$values) {
-            $labels[] = ucfirst($item->status->value);
+            $labels[] = ucfirst(EventStatus::from($item->status)->value);
             $values[] = $item->count;
         });
 
@@ -157,7 +156,9 @@ class DashboardService
      */
     public function getRecentEvents(int $limit = 5): array
     {
-        return Event::latest('created_at')
+        return Event::query()
+            ->withCount('registrations')
+            ->latest('created_at')
             ->limit($limit)
             ->get()
             ->map(function ($event) {
@@ -165,7 +166,7 @@ class DashboardService
                     'title' => $event->title,
                     'status' => $event->status->value,
                     'start_time' => $event->start_time->format('M d, Y H:i'),
-                    'registrations' => $event->registrations()->count(),
+                    'registrations' => $event->registrations_count,
                 ];
             })
             ->toArray();
